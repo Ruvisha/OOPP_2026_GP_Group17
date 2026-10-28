@@ -12,14 +12,16 @@ import java.util.Map;
 
 public class LMSGuiApplication extends JFrame {
 
-    // Database Configuration (from database/database.sql: faculty_academic_management)
+    // Database Configuration (from database/database.sql:
+    // faculty_academic_management)
     private static String dbHost = "localhost";
-    private static String dbPort = "3306";
+    private static String dbPort = "3307";
     private static String dbName = "faculty_academic_management";
     private static String dbUser = "root";
     private static String dbPassword = ""; // Update with your MySQL password if configured
 
-    // Current Logged-in User Information (Default: Technical Officer Mr. Saman Kumara)
+    // Current Logged-in User Information (Default: Technical Officer Mr. Saman
+    // Kumara)
     private static int currentUserId = 7;
     private static String currentUsername = "to_saman";
     private static String currentFullName = "Mr. Saman Kumara";
@@ -106,7 +108,8 @@ public class LMSGuiApplication extends JFrame {
         // Main Workspace: Left Sidebar navigation + Center Card Content
         JPanel mainWorkspace = new JPanel(new BorderLayout());
 
-        // Left Navigation Sidebar (Home, Profile, Attendance, Medical, Notices, Timetable + Log Out down at bottom)
+        // Left Navigation Sidebar (Home, Profile, Attendance, Medical, Notices,
+        // Timetable + Log Out down at bottom)
         JPanel sidebar = createSidebarPanel();
         mainWorkspace.add(sidebar, BorderLayout.WEST);
 
@@ -530,7 +533,8 @@ public class LMSGuiApplication extends JFrame {
             handleUserLogin(u);
             loginDialog.dispose();
             switchSection("HOME");
-            JOptionPane.showMessageDialog(this, "Logged in successfully as " + currentFullName + " (" + currentRole + ")!",
+            JOptionPane.showMessageDialog(this,
+                    "Logged in successfully as " + currentFullName + " (" + currentRole + ")!",
                     "Login Successful", JOptionPane.INFORMATION_MESSAGE);
         });
 
@@ -773,7 +777,8 @@ public class LMSGuiApplication extends JFrame {
         JPanel box = new JPanel(new BorderLayout(6, 6));
         box.setBackground(bg);
         box.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), 80), 1, true),
+                new LineBorder(new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), 80), 1,
+                        true),
                 new EmptyBorder(12, 14, 12, 14)));
 
         JLabel headLabel = new JLabel(heading);
@@ -1023,7 +1028,8 @@ public class LMSGuiApplication extends JFrame {
         profHeaderNameLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
         profHeaderNameLabel.setForeground(new Color(30, 41, 59));
 
-        profHeaderSubLabel = new JLabel(currentRole + "  •  Staff ID: " + currentStaffId + "  •  " + currentAssignedLab);
+        profHeaderSubLabel = new JLabel(
+                currentRole + "  •  Staff ID: " + currentStaffId + "  •  " + currentAssignedLab);
         profHeaderSubLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         profHeaderSubLabel.setForeground(new Color(100, 116, 139));
 
@@ -1279,7 +1285,8 @@ public class LMSGuiApplication extends JFrame {
 
         // Form Panel (Technical Officer recording student attendance)
         JPanel formPanel = new JPanel(new GridLayout(2, 6, 6, 6));
-        formPanel.setBorder(BorderFactory.createTitledBorder("Record Student Attendance (Technical Officer: " + currentFullName + ")"));
+        formPanel.setBorder(BorderFactory
+                .createTitledBorder("Record Student Attendance (Technical Officer: " + currentFullName + ")"));
 
         JTextField regNoField = new JTextField("TG/2024/2001");
         JTextField nameField = new JTextField("M.D.R.L. Nonis");
@@ -1379,7 +1386,8 @@ public class LMSGuiApplication extends JFrame {
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
 
         JPanel formPanel = new JPanel(new GridLayout(2, 6, 6, 6));
-        formPanel.setBorder(BorderFactory.createTitledBorder("Log Student Medical Submission (Technical Officer Verification)"));
+        formPanel.setBorder(
+                BorderFactory.createTitledBorder("Log Student Medical Submission (Technical Officer Verification)"));
 
         JTextField regNoField = new JTextField("TG/2024/2006");
         JTextField nameField = new JTextField("Dilshan Madushanka");
@@ -1431,7 +1439,8 @@ public class LMSGuiApplication extends JFrame {
                 loadMedicalData();
             }
             updateDashboardData();
-            JOptionPane.showMessageDialog(this, "Medical record logged by Technical Officer (Pending Review)!", "Success",
+            JOptionPane.showMessageDialog(this, "Medical record logged by Technical Officer (Pending Review)!",
+                    "Success",
                     JOptionPane.INFORMATION_MESSAGE);
         });
 
@@ -1791,7 +1800,8 @@ public class LMSGuiApplication extends JFrame {
     private void loadTimetableData() {
         timetableModel.setRowCount(0);
         String sql = "SELECT t.timetable_id, t.day_of_week, " +
-                "CONCAT(TIME_FORMAT(t.start_time, '%h:%i %p'), ' - ', TIME_FORMAT(t.end_time, '%h:%i %p')) AS time_slot, " +
+                "CONCAT(TIME_FORMAT(t.start_time, '%h:%i %p'), ' - ', TIME_FORMAT(t.end_time, '%h:%i %p')) AS time_slot, "
+                +
                 "c.course_code, c.course_name, t.session_type, t.room, " +
                 "COALESCE(u.full_name, 'Unassigned') AS lecturer " +
                 "FROM timetables t " +
