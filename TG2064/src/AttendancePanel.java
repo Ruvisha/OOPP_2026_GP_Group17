@@ -23,13 +23,13 @@ public class AttendancePanel extends JPanel {
         add(new JScrollPane(table), BorderLayout.CENTER);
 
         JPanel form = new JPanel(new GridLayout(2, 6, 6, 6));
-        form.setBorder(BorderFactory.createTitledBorder("Record Student Attendance (Technical Officer)"));
+        form.setBorder(BorderFactory.createTitledBorder("Record Student Attendance"));
 
-        JTextField regField = new JTextField("TG/2024/2001");
+        JTextField regField = new JTextField("");
         courseBox = new JComboBox<>(new String[] { "ICT2132", "ICT2113", "ICT2122", "ICT2143" });
-        JTextField dateField = new JTextField("2026-10-18");
+        JTextField dateField = new JTextField("");
         JComboBox<String> typeBox = new JComboBox<>(new String[] { "THEORY", "PRACTICAL" });
-        JTextField sessionNumField = new JTextField("16");
+        JTextField sessionNumField = new JTextField("");
         JComboBox<String> statusBox = new JComboBox<>(new String[] { "PRESENT", "ABSENT" });
         JButton addBtn = new JButton("Save Record");
 
@@ -62,7 +62,7 @@ public class AttendancePanel extends JPanel {
             }
         });
 
-        add(form, BorderLayout.SOUTH);
+        add(form, BorderLayout.NORTH);
         loadData();
     }
 

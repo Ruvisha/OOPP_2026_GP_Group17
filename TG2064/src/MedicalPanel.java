@@ -34,10 +34,10 @@ public class MedicalPanel extends JPanel {
         JPanel form = new JPanel(new GridLayout(2, 5, 6, 6));
         form.setBorder(BorderFactory.createTitledBorder("Log Student Medical Submission"));
 
-        JTextField regField = new JTextField("TG/2024/2005");
+        JTextField regField = new JTextField("");
         JComboBox<String> courseBox = new JComboBox<>(new String[] { "ICT2132", "ICT2113", "ICT2122", "ICT2143" });
-        JTextField sDateField = new JTextField("2026-10-10");
-        JTextField subDateField = new JTextField("2026-10-12");
+        JTextField sDateField = new JTextField("");
+        JTextField subDateField = new JTextField("");
         JTextField reasonField = new JTextField("Fever");
         JButton addBtn = new JButton("Log Medical");
 
@@ -66,7 +66,7 @@ public class MedicalPanel extends JPanel {
             }
         });
 
-        add(form, BorderLayout.SOUTH);
+        add(form, BorderLayout.NORTH);
         loadData();
     }
 

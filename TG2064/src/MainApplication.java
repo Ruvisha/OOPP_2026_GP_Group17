@@ -40,7 +40,7 @@ public class MainApplication extends JFrame {
 
         // Register Modules
         cardContainer.add(new DashboardPanel(), "HOME");
-        cardContainer.add(createPlaceholderPanel("Officer Profile View"), "PROFILE");
+        cardContainer.add(createProfilePanel(7), "PROFILE");
         cardContainer.add(new AttendancePanel(7), "ATTENDANCE");
         cardContainer.add(new MedicalPanel(7), "MEDICAL");
         cardContainer.add(new TechnicalTimetablePanel(), "TIMETABLE");
@@ -76,7 +76,7 @@ public class MainApplication extends JFrame {
     private JPanel createSidebar() {
         JPanel sidebar = new JPanel(new BorderLayout());
         sidebar.setPreferredSize(new Dimension(240, 0));
-        sidebar.setBackground(new Color(24, 32, 47));
+        sidebar.setBackground(Color.black);
 
         // Brand Top Header
         JPanel brandPanel = new JPanel();
@@ -131,7 +131,7 @@ public class MainApplication extends JFrame {
 
         JButton logoutBtn = new JButton("Logout from Portal");
         logoutBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        logoutBtn.setForeground(Color.WHITE);
+        logoutBtn.setForeground(Color.BLACK);
         logoutBtn.setBackground(new Color(239, 68, 68)); // Red color
         logoutBtn.setFocusPainted(false);
         logoutBtn.setOpaque(true);
@@ -159,15 +159,21 @@ public class MainApplication extends JFrame {
         btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
 
-        // Colors & Visibility Fixes:
-        btn.setForeground(Color.WHITE); // High contrast text
-        btn.setBackground(new Color(36, 48, 70)); // Dark solid blue background
+        // Essential fixes so Swing actually renders custom background colors
+        btn.setContentAreaFilled(true);
         btn.setOpaque(true);
         btn.setFocusPainted(false);
+
+        // ==========================================
+        // 1. NORMAL / INACTIVE (Green Background, Black Text)
+        // ==========================================
+        btn.setBackground(new Color(160, 210, 180)); // Soft Green Background
+        btn.setForeground(Color.BLACK);             // Black text
+
         btn.setHorizontalAlignment(SwingConstants.LEFT);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(60, 75, 100), 1, true),
+                new LineBorder(new Color(100, 160, 130), 1, true),
                 new EmptyBorder(8, 14, 8, 14)));
 
         // Hover Effect
@@ -175,16 +181,20 @@ public class MainApplication extends JFrame {
             @Override
             public void mouseEntered(MouseEvent e) {
                 if (!cardName.equals(activeSection)) {
-                    btn.setBackground(new Color(48, 64, 92));
-                    btn.setForeground(Color.WHITE);
+                    // ==========================================
+                    // 2. MOUSE HOVER (Brighter Green, Black Text)
+                    // ==========================================
+                    btn.setBackground(new Color(130, 195, 155));
+                    btn.setForeground(Color.BLACK);
                 }
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
                 if (!cardName.equals(activeSection)) {
-                    btn.setBackground(new Color(36, 48, 70));
-                    btn.setForeground(new Color(226, 232, 240));
+                    // Revert back to normal green when mouse leaves
+                    btn.setBackground(new Color(160, 210, 180));
+                    btn.setForeground(Color.BLACK);
                 }
             }
         });
@@ -192,6 +202,57 @@ public class MainApplication extends JFrame {
         btn.addActionListener(e -> switchSection(cardName));
         navButtons.put(cardName, btn);
         return btn;
+    }
+    private JPanel createProfilePanel(int userId) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(new Color(245, 247, 250));
+
+        JPanel card = new JPanel(new GridLayout(5, 2, 10, 10));
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(226, 232, 240), 1, true),
+                new EmptyBorder(24, 24, 24, 24)
+        ));
+
+        JLabel idVal = new JLabel();
+        JLabel nameVal = new JLabel();
+        JLabel roleVal = new JLabel();
+        JLabel statusVal = new JLabel();
+
+        card.add(new JLabel("User ID:")); card.add(idVal);
+        card.add(new JLabel("Full Name:")); card.add(nameVal);
+        card.add(new JLabel("Role:")); card.add(roleVal);
+        card.add(new JLabel("System Status:")); card.add(statusVal);
+
+        JButton refreshBtn = new JButton("Refresh Profile");
+        card.add(new JLabel("")); card.add(refreshBtn);
+
+        // Code to fetch data from your XAMPP MySQL database
+        Runnable loadProfileData = () -> {
+            try (var conn = DatabaseConnection.getConnection();
+                 var stmt = conn.prepareStatement("SELECT * FROM users WHERE user_id = ?")) {
+
+                stmt.setInt(1, userId);
+                var rs = stmt.executeQuery();
+
+                if (rs.next()) {
+                    idVal.setText(String.valueOf(rs.getInt("user_id")));
+                    nameVal.setText(rs.getString("name")); // Adjust column name if it's 'username' or 'full_name' in your table
+                    roleVal.setText(rs.getString("role"));
+                    statusVal.setText("Active");
+                } else {
+                    JOptionPane.showMessageDialog(panel, "User profile not found in database.");
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(panel, "Database Error: " + ex.getMessage());
+            }
+        };
+
+        refreshBtn.addActionListener(e -> loadProfileData.run());
+        loadProfileData.run(); // Load data initially when panel opens
+
+        panel.add(card);
+        return panel;
     }
 
     private void switchSection(String cardName) {
@@ -201,16 +262,20 @@ public class MainApplication extends JFrame {
         for (Map.Entry<String, JButton> entry : navButtons.entrySet()) {
             JButton b = entry.getValue();
             if (entry.getKey().equals(cardName)) {
-                b.setBackground(new Color(37, 99, 235)); // Vibrant Active Blue
-                b.setForeground(Color.WHITE);
+                // ==========================================
+                // 3. ACTIVE / CLICKED (Vibrant Green, Black Text)
+                // ==========================================
+                b.setBackground(new Color(52, 211, 153)); // Active Green Background
+                b.setForeground(Color.BLACK);             // Black text
                 b.setBorder(BorderFactory.createCompoundBorder(
-                        new LineBorder(new Color(96, 165, 250), 1, true),
+                        new LineBorder(new Color(16, 185, 129), 1, true),
                         new EmptyBorder(8, 14, 8, 14)));
             } else {
-                b.setBackground(new Color(36, 48, 70));
-                b.setForeground(new Color(226, 232, 240));
+                // Inactive state for all other buttons in the loop
+                b.setBackground(new Color(160, 210, 180));
+                b.setForeground(Color.BLACK);             // Black text
                 b.setBorder(BorderFactory.createCompoundBorder(
-                        new LineBorder(new Color(60, 75, 100), 1, true),
+                        new LineBorder(new Color(100, 160, 130), 1, true),
                         new EmptyBorder(8, 14, 8, 14)));
             }
         }

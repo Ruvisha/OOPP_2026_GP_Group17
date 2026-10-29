@@ -54,7 +54,7 @@ public class TechnicalTimetablePanel extends JPanel {
             }
         });
 
-        add(form, BorderLayout.SOUTH);
+        add(form, BorderLayout.NORTH);
         loadData();
     }
 
