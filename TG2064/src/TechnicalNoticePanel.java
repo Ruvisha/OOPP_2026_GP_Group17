@@ -47,7 +47,7 @@ public class TechnicalNoticePanel extends JPanel {
             }
         });
 
-        add(form, BorderLayout.SOUTH);
+        add(form, BorderLayout.NORTH);
         loadData();
     }
 

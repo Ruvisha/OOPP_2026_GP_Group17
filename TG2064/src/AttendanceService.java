@@ -20,6 +20,8 @@ public class AttendanceService {
         return attendanceDAO.getAttendanceByStudent(studentRegNo);
     }
 
+
+
     public AttendanceSummary getSummaryForCourse(String studentRegNo, String courseCode) throws SQLException {
         List<Attendance> attendances = attendanceDAO.getAttendanceByStudent(studentRegNo);
         List<Medical> medicals = medicalDAO.getMedicalsByStudent(studentRegNo);
