@@ -83,15 +83,15 @@ public class LoginFrame extends JFrame {
         systemSubtitle.setForeground(new Color(254, 240, 138));
         systemSubtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel courseUnit = new JLabel("ICT2132 - OOP Practicum");
-        courseUnit.setFont(new Font("Segoe UI", Font.ITALIC, 13));
-        courseUnit.setForeground(new Color(203, 213, 225));
-        courseUnit.setAlignmentX(Component.CENTER_ALIGNMENT);
+        //JLabel courseUnit = new JLabel("ICT2132 - OOP Practicum");
+        //courseUnit.setFont(new Font("Segoe UI", Font.ITALIC, 13));
+        //courseUnit.setForeground(new Color(203, 213, 225));
+        //courseUnit.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel groupLabel = new JLabel("Group 17 Project");
-        groupLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        groupLabel.setForeground(new Color(241, 245, 249));
-        groupLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        //JLabel groupLabel = new JLabel("Group 17 Project");
+        //groupLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        //roupLabel.setForeground(new Color(241, 245, 249));
+        //groupLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         bannerPanel.add(facultyLabel);
         bannerPanel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -104,9 +104,9 @@ public class LoginFrame extends JFrame {
         bannerPanel.add(systemTitle);
         bannerPanel.add(systemSubtitle);
         bannerPanel.add(Box.createRigidArea(new Dimension(0, 40)));
-        bannerPanel.add(courseUnit);
-        bannerPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        bannerPanel.add(groupLabel);
+        //bannerPanel.add(courseUnit);
+        // bannerPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        //bannerPanel.add(groupLabel);
 
         // Right Form Panel
         JPanel formContainer = new JPanel(new GridBagLayout());
