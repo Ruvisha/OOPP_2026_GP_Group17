@@ -33,6 +33,7 @@ public class GPAService {
         int totalCredits = 0;
 
         for (Grade g : semesterGrades) {
+            // Use the model's default credit value when a grade has no valid credit count.
             int cred = g.getCredits() > 0 ? g.getCredits() : 2;
             totalPoints += cred * g.getGradePoint();
             totalCredits += cred;
@@ -51,7 +52,7 @@ public class GPAService {
     }
 
     /**
-     * Determines the Degree Class Classification from CGPA.
+     * Determines the degree classification from CGPA using the project's class thresholds.
      */
     public String getClassification(double cgpa) {
         if (cgpa >= 3.70) {

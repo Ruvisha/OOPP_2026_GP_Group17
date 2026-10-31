@@ -36,6 +36,7 @@ public class EligibilityRecord {
     }
 
     public void evaluate() {
+        // Final-exam eligibility requires both the CA mark and attendance thresholds.
         this.caEligible = (caMark >= 40.0);
         this.attendanceEligible = (attendancePercentage >= 80.0);
         this.overallEligible = (caEligible && attendanceEligible);

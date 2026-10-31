@@ -34,6 +34,7 @@ public class EvaluationDAO {
         "FROM evaluations e " +
         "JOIN courses c ON e.course_id = c.course_id ";
 
+    // Include course details so callers can display evaluations without another query.
     public List<Evaluation> getEvaluationsByCourse(int courseId) {
         List<Evaluation> list = new ArrayList<>();
         String sql = BASE_SELECT + "WHERE e.course_id = ? ORDER BY e.evaluation_id";
@@ -88,6 +89,7 @@ public class EvaluationDAO {
 
             int affected = stmt.executeUpdate();
             if (affected > 0) {
+                // Return the database-generated ID to the model that was just saved.
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
                         eval.setEvaluationId(rs.getInt(1));
