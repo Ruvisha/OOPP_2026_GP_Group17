@@ -111,6 +111,7 @@ public class Evaluation {
         this.academicYear = academicYear;
     }
 
+    // CA components are combined separately from the final examination components.
     public boolean isCaComponent() {
         return "QUIZ".equalsIgnoreCase(evaluationType) ||
                "ASSIGNMENT".equalsIgnoreCase(evaluationType) ||
