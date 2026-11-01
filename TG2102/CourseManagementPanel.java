@@ -1,6 +1,7 @@
 package com.fot.ams.ui.admin;
 
 import com.fot.ams.dao.DepartmentDAO;
+import com.fot.ams.dao.CourseDAO;
 import com.fot.ams.exception.ValidationException;
 import com.fot.ams.model.Course;
 import com.fot.ams.model.Department;
@@ -31,7 +32,13 @@ public class CourseManagementPanel extends JPanel {
     private JTextField txtCourseName;
     private JSpinner spinCredits;
     private JSpinner spinSemester;
+    private JSpinner spinStudyYear;
+    private JComboBox<FilterItem> cmbDepartmentFilter;
+    private JComboBox<String> cmbYearFilter;
+    private JComboBox<String> cmbSemesterFilter;
     private JComboBox<DeptItem> cmbDepartment;
+    private JComboBox<CourseDAO.LecturerOption> cmbLecturer;
+    private final CourseDAO courseDAO = new CourseDAO();
     private JCheckBox chkTheory;
     private JCheckBox chkPractical;
     private JTextArea txtDescription;
@@ -87,7 +94,7 @@ public class CourseManagementPanel extends JPanel {
         tablePanel.setBackground(Color.WHITE);
         tablePanel.setBorder(new LineBorder(ModernTheme.BORDER, 1));
 
-        String[] cols = {"ID", "Course Code", "Course Name", "Credits", "Sem", "Department", "Theory", "Practical"};
+        String[] cols = {"ID", "Course Code", "Course Name", "Credits", "Year", "Sem", "Department", "Theory", "Practical"};
         tableModel = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -104,6 +111,21 @@ public class CourseManagementPanel extends JPanel {
             }
         });
 
+        JPanel filterBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
+        filterBar.setBackground(Color.WHITE);
+        cmbDepartmentFilter = new JComboBox<>();
+        cmbDepartmentFilter.addItem(new FilterItem(0, "All Departments"));
+        cmbYearFilter = new JComboBox<>(new String[]{"All Years", "Year 1", "Year 2", "Year 3", "Year 4"});
+        cmbSemesterFilter = new JComboBox<>(new String[]{"All Semesters", "Semester 1", "Semester 2"});
+        filterBar.add(new JLabel("Department:")); filterBar.add(cmbDepartmentFilter);
+        filterBar.add(new JLabel("Year:")); filterBar.add(cmbYearFilter);
+        filterBar.add(new JLabel("Semester:")); filterBar.add(cmbSemesterFilter);
+        JButton btnFilter = ModernTheme.createSecondaryButton("Apply Filter");
+        JButton btnResetFilter = ModernTheme.createSecondaryButton("Reset");
+        filterBar.add(btnFilter); filterBar.add(btnResetFilter);
+        btnFilter.addActionListener(e -> loadCourses());
+        btnResetFilter.addActionListener(e -> { cmbDepartmentFilter.setSelectedIndex(0); cmbYearFilter.setSelectedIndex(0); cmbSemesterFilter.setSelectedIndex(0); loadCourses(); });
+        tablePanel.add(filterBar, BorderLayout.NORTH);
         tablePanel.add(new JScrollPane(courseTable), BorderLayout.CENTER);
 
         // Form Panel
@@ -125,10 +147,16 @@ public class CourseManagementPanel extends JPanel {
         txtCourseId.setVisible(false);
 
         txtCourseCode = new JTextField();
+        txtCourseCode.setEditable(false); // generated from department/year/semester/credits
         txtCourseName = new JTextField();
         spinCredits = new JSpinner(new SpinnerNumberModel(2, 1, 6, 1));
-        spinSemester = new JSpinner(new SpinnerNumberModel(1, 1, 8, 1));
+        spinSemester = new JSpinner(new SpinnerNumberModel(1, 1, 2, 1));
+        spinStudyYear = new JSpinner(new SpinnerNumberModel(1, 1, 4, 1));
         cmbDepartment = new JComboBox<>();
+        cmbLecturer = new JComboBox<>();
+        cmbDepartment.addActionListener(e -> { loadLecturersForSelectedDepartment(); refreshGeneratedCourseCode(); });
+        spinSemester.addChangeListener(e -> refreshGeneratedCourseCode());
+        spinStudyYear.addChangeListener(e -> refreshGeneratedCourseCode());
         chkTheory = new JCheckBox("Includes Theory Component (15 Sessions)", true);
         chkPractical = new JCheckBox("Includes Practical Component (15 Sessions)", false);
         chkTheory.setBackground(Color.WHITE);
@@ -143,8 +171,10 @@ public class CourseManagementPanel extends JPanel {
         fields.add(createRow("Course Code (e.g. ICT2132):", txtCourseCode));
         fields.add(createRow("Course Name / Title:", txtCourseName));
         fields.add(createRow("Credit Value:", spinCredits));
-        fields.add(createRow("Semester Number:", spinSemester));
+        fields.add(createRow("Study Year (1-4):", spinStudyYear));
+        fields.add(createRow("Semester Number (1-2):", spinSemester));
         fields.add(createRow("Offering Department:", cmbDepartment));
+        fields.add(createRow("Assigned Lecturer:", cmbLecturer));
         fields.add(Box.createRigidArea(new Dimension(0, 5)));
         fields.add(chkTheory);
         fields.add(chkPractical);
@@ -202,27 +232,54 @@ public class CourseManagementPanel extends JPanel {
         return p;
     }
 
+    private static class FilterItem {
+        final int id; final String label;
+        FilterItem(int id, String label) { this.id = id; this.label = label; }
+        @Override public String toString() { return label; }
+    }
+
     private void loadDepartments() {
         cmbDepartment.removeAllItems();
+        cmbDepartmentFilter.removeAllItems();
+        cmbDepartmentFilter.addItem(new FilterItem(0, "All Departments"));
         List<Department> list = departmentDAO.getAllDepartments();
         for (Department d : list) {
-            cmbDepartment.addItem(new DeptItem(d.getDepartmentId(), d.getDepartmentCode() + " - " + d.getDepartmentName()));
+            String label = d.getDepartmentCode() + " - " + d.getDepartmentName();
+            cmbDepartment.addItem(new DeptItem(d.getDepartmentId(), label));
+            cmbDepartmentFilter.addItem(new FilterItem(d.getDepartmentId(), label));
+        }
+    }
+
+    private void loadLecturersForSelectedDepartment() {
+        cmbLecturer.removeAllItems();
+        DeptItem dept = (DeptItem) cmbDepartment.getSelectedItem();
+        if (dept == null) return;
+        List<CourseDAO.LecturerOption> lecturers = courseDAO.getLecturersByDepartment(dept.id);
+        for (CourseDAO.LecturerOption lecturer : lecturers) cmbLecturer.addItem(lecturer);
+        if (lecturers.isEmpty()) {
+            cmbLecturer.addItem(new CourseDAO.LecturerOption(-1, "No active lecturers in this department"));
+            cmbLecturer.setSelectedIndex(0);
         }
     }
 
     public void loadCourses() {
         tableModel.setRowCount(0);
-        List<Course> list = courseService.getAllCourses();
+        FilterItem dept = (FilterItem) cmbDepartmentFilter.getSelectedItem();
+        int departmentId = dept == null ? 0 : dept.id;
+        int year = cmbYearFilter.getSelectedIndex();
+        int semester = cmbSemesterFilter.getSelectedIndex();
+        List<Course> list = courseDAO.getCoursesFiltered(departmentId, year, semester);
         for (Course c : list) {
             tableModel.addRow(new Object[]{
-                c.getCourseId(),
-                c.getCourseCode(),
-                c.getCourseName(),
-                c.getCredits(),
-                c.getSemester(),
-                c.getDepartmentCode() != null ? c.getDepartmentCode() : c.getDepartmentName(),
-                c.isHasTheory() ? "Yes" : "No",
-                c.isHasPractical() ? "Yes" : "No"
+                    c.getCourseId(),
+                    c.getCourseCode(),
+                    c.getCourseName(),
+                    c.getCredits(),
+                    c.getStudyYear(),
+                    c.getSemester(),
+                    c.getDepartmentCode() != null ? c.getDepartmentCode() : c.getDepartmentName(),
+                    c.isHasTheory() ? "Yes" : "No",
+                    c.isHasPractical() ? "Yes" : "No"
             });
         }
     }
@@ -240,6 +297,7 @@ public class CourseManagementPanel extends JPanel {
         txtCourseName.setText(c.getCourseName());
         spinCredits.setValue(c.getCredits());
         spinSemester.setValue(c.getSemester());
+        spinStudyYear.setValue(c.getStudyYear());
         chkTheory.setSelected(c.isHasTheory());
         chkPractical.setSelected(c.isHasPractical());
         txtDescription.setText(c.getDescription() != null ? c.getDescription() : "");
@@ -247,6 +305,12 @@ public class CourseManagementPanel extends JPanel {
         for (int i = 0; i < cmbDepartment.getItemCount(); i++) {
             if (cmbDepartment.getItemAt(i).id == c.getDepartmentId()) {
                 cmbDepartment.setSelectedIndex(i);
+                break;
+            }
+        }
+        for (int i = 0; i < cmbLecturer.getItemCount(); i++) {
+            if (cmbLecturer.getItemAt(i).getId() == c.getLecturerId()) {
+                cmbLecturer.setSelectedIndex(i);
                 break;
             }
         }
@@ -259,30 +323,53 @@ public class CourseManagementPanel extends JPanel {
         txtCourseName.setText("");
         spinCredits.setValue(2);
         spinSemester.setValue(1);
+        spinStudyYear.setValue(1);
         chkTheory.setSelected(true);
         chkPractical.setSelected(false);
         txtDescription.setText("");
         if (cmbDepartment.getItemCount() > 0) cmbDepartment.setSelectedIndex(0);
+        loadLecturersForSelectedDepartment();
+        refreshGeneratedCourseCode();
+    }
+
+
+    private void refreshGeneratedCourseCode() {
+        if (txtCourseCode == null || !txtCourseId.getText().trim().isEmpty()) return;
+        DeptItem dept = (DeptItem) cmbDepartment.getSelectedItem();
+        if (dept == null) return;
+        try {
+            String code = courseDAO.generateCourseCode(dept.id, (int) spinStudyYear.getValue(),
+                    (int) spinSemester.getValue(), (int) spinCredits.getValue());
+            txtCourseCode.setText(code);
+        } catch (Exception ignored) { /* Form remains usable while database is unavailable. */ }
     }
 
     private void handleAdd() {
         try {
             DeptItem dept = (DeptItem) cmbDepartment.getSelectedItem();
             if (dept == null) throw new ValidationException("Please select a department.");
+            if (txtCourseName.getText().trim().isEmpty()) throw new ValidationException("Please enter a course name.");
+            if ((int) spinStudyYear.getValue() < 1 || (int) spinStudyYear.getValue() > 4) throw new ValidationException("Study year must be between 1 and 4.");
+            if ((int) spinSemester.getValue() < 1 || (int) spinSemester.getValue() > 2) throw new ValidationException("Semester must be 1 or 2.");
+            CourseDAO.LecturerOption lecturer = (CourseDAO.LecturerOption) cmbLecturer.getSelectedItem();
+            if (lecturer == null || lecturer.getId() <= 0) throw new ValidationException("No lecturer is available for the selected department.");
 
             Course c = new Course(
-                0,
-                txtCourseCode.getText().trim().toUpperCase(),
-                txtCourseName.getText().trim(),
-                (int) spinCredits.getValue(),
-                (int) spinSemester.getValue(),
-                dept.id,
-                chkTheory.isSelected(),
-                chkPractical.isSelected(),
-                txtDescription.getText().trim()
+                    0,
+                    txtCourseCode.getText().trim().toUpperCase(),
+                    txtCourseName.getText().trim(),
+                    (int) spinCredits.getValue(),
+                    (int) spinSemester.getValue(),
+                    dept.id,
+                    chkTheory.isSelected(),
+                    chkPractical.isSelected(),
+                    txtDescription.getText().trim()
             );
+            c.setStudyYear((int) spinStudyYear.getValue());
+            c.setLecturerId(lecturer.getId());
 
-            courseService.addCourse(c);
+            boolean saved = courseService.addCourse(c);
+            if (!saved) throw new ValidationException("Course was not saved. Please try again.");
             JOptionPane.showMessageDialog(this, "Course created successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             loadCourses();
             clearForm();
@@ -303,20 +390,28 @@ public class CourseManagementPanel extends JPanel {
             int courseId = Integer.parseInt(txtCourseId.getText());
             DeptItem dept = (DeptItem) cmbDepartment.getSelectedItem();
             if (dept == null) throw new ValidationException("Please select a department.");
+            if (txtCourseName.getText().trim().isEmpty()) throw new ValidationException("Please enter a course name.");
+            if ((int) spinStudyYear.getValue() < 1 || (int) spinStudyYear.getValue() > 4) throw new ValidationException("Study year must be between 1 and 4.");
+            if ((int) spinSemester.getValue() < 1 || (int) spinSemester.getValue() > 2) throw new ValidationException("Semester must be 1 or 2.");
+            CourseDAO.LecturerOption lecturer = (CourseDAO.LecturerOption) cmbLecturer.getSelectedItem();
+            if (lecturer == null || lecturer.getId() <= 0) throw new ValidationException("No lecturer is available for the selected department.");
 
             Course c = new Course(
-                courseId,
-                txtCourseCode.getText().trim().toUpperCase(),
-                txtCourseName.getText().trim(),
-                (int) spinCredits.getValue(),
-                (int) spinSemester.getValue(),
-                dept.id,
-                chkTheory.isSelected(),
-                chkPractical.isSelected(),
-                txtDescription.getText().trim()
+                    courseId,
+                    txtCourseCode.getText().trim().toUpperCase(),
+                    txtCourseName.getText().trim(),
+                    (int) spinCredits.getValue(),
+                    (int) spinSemester.getValue(),
+                    dept.id,
+                    chkTheory.isSelected(),
+                    chkPractical.isSelected(),
+                    txtDescription.getText().trim()
             );
+            c.setStudyYear((int) spinStudyYear.getValue());
+            c.setLecturerId(lecturer.getId());
 
-            courseService.updateCourse(c);
+            boolean updated = courseService.updateCourse(c);
+            if (!updated) throw new ValidationException("Course was not updated. Please try again.");
             JOptionPane.showMessageDialog(this, "Course updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             loadCourses();
             clearForm();
@@ -335,16 +430,17 @@ public class CourseManagementPanel extends JPanel {
 
         int courseId = Integer.parseInt(txtCourseId.getText());
         int confirm = JOptionPane.showConfirmDialog(
-            this,
-            "Are you sure you want to delete course " + txtCourseCode.getText() + "?\nAll associated enrollments, marks, and attendance records will be removed.",
-            "Confirm Delete",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.WARNING_MESSAGE
+                this,
+                "Are you sure you want to delete course " + txtCourseCode.getText() + "?\nAll associated enrollments, marks, and attendance records will be removed.",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
         );
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                courseService.deleteCourse(courseId);
+                boolean deleted = courseService.deleteCourse(courseId);
+                if (!deleted) throw new IllegalStateException("Course was not deleted. Please try again.");
                 JOptionPane.showMessageDialog(this, "Course deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
                 loadCourses();
                 clearForm();

@@ -9,12 +9,15 @@ public class Course {
     private String courseName;
     private int credits = 2;
     private int semester = 1;
+    private int studyYear = 1;
     private int departmentId;
     private String departmentCode;
     private String departmentName;
     private boolean hasTheory = true;
     private boolean hasPractical = false;
     private String description;
+    private int lecturerId;
+    private String lecturerName;
 
     public Course() {
     }
@@ -64,6 +67,10 @@ public class Course {
         this.credits = credits;
     }
 
+    public int getStudyYear() { return studyYear; }
+
+    public void setStudyYear(int studyYear) { this.studyYear = studyYear; }
+
     public int getSemester() {
         return semester;
     }
@@ -111,6 +118,14 @@ public class Course {
     public void setHasPractical(boolean hasPractical) {
         this.hasPractical = hasPractical;
     }
+
+    public int getLecturerId() { return lecturerId; }
+
+    public void setLecturerId(int lecturerId) { this.lecturerId = lecturerId; }
+
+    public String getLecturerName() { return lecturerName; }
+
+    public void setLecturerName(String lecturerName) { this.lecturerName = lecturerName; }
 
     public String getDescription() {
         return description;

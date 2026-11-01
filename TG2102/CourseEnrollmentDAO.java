@@ -1,6 +1,6 @@
 package com.fot.ams.dao;
 
-import com.fot.ams.database.DatabaseConnection;
+import com.fot.ams.tg2102.TG2102DatabaseConnection;
 import com.fot.ams.exception.DatabaseException;
 import com.fot.ams.model.CourseEnrollment;
 
@@ -39,7 +39,7 @@ public class CourseEnrollmentDAO {
     public List<CourseEnrollment> getEnrollmentsByCourse(int courseId) {
         List<CourseEnrollment> list = new ArrayList<>();
         String sql = BASE_SELECT + "WHERE ce.course_id = ? ORDER BY u.student_reg_no";
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = TG2102DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, courseId);
@@ -57,7 +57,7 @@ public class CourseEnrollmentDAO {
     public List<CourseEnrollment> getEnrollmentsByStudent(int studentId) {
         List<CourseEnrollment> list = new ArrayList<>();
         String sql = BASE_SELECT + "WHERE ce.student_id = ? ORDER BY c.course_code";
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = TG2102DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, studentId);
@@ -76,7 +76,7 @@ public class CourseEnrollmentDAO {
         String sql = "INSERT INTO course_enrollment (student_id, course_id, academic_year, semester, is_repeat) " +
                      "VALUES (?, ?, ?, ?, ?) " +
                      "ON DUPLICATE KEY UPDATE is_repeat = VALUES(is_repeat)";
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = TG2102DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, studentId);
@@ -91,21 +91,29 @@ public class CourseEnrollmentDAO {
         }
     }
 
-    public boolean isStudentEnrolled(int studentId, int courseId) {
-        String sql = "SELECT COUNT(*) FROM course_enrollment WHERE student_id = ? AND course_id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
+    public boolean isStudentEnrolled(int studentId, int courseId, String academicYear, int semester) {
+        String sql = "SELECT COUNT(*) FROM course_enrollment WHERE student_id = ? AND course_id = ? AND academic_year = ? AND semester = ?";
+        try (Connection conn = TG2102DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, studentId);
             stmt.setInt(2, courseId);
+            stmt.setString(3, academicYear);
+            stmt.setInt(4, semester);
             try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0;
-                }
+                if (rs.next()) return rs.getInt(1) > 0;
             }
         } catch (SQLException e) {
             throw new DatabaseException("Failed to check enrollment: " + e.getMessage(), e);
         }
         return false;
+    }
+
+    public boolean deleteEnrollment(int enrollmentId) {
+        String sql = "DELETE FROM course_enrollment WHERE enrollment_id = ?";
+        try (Connection conn = TG2102DatabaseConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, enrollmentId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) { throw new DatabaseException("Failed to cancel enrollment: " + e.getMessage(), e); }
     }
 }
