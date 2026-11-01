@@ -150,7 +150,7 @@ public class TechnicalOfficerDashboard extends JFrame {
 
         btnOverview.addActionListener(e -> switchCard("OVERVIEW", btnOverview));
         btnProfile.addActionListener(e -> {
-            profilePanel.loadProfile();
+            profilePanel.loadLatestProfileFromDatabase();
             switchCard("PROFILE", btnProfile);
         });
         btnAttendance.addActionListener(e -> switchCard("ATTENDANCE", btnAttendance));
@@ -207,11 +207,76 @@ public class TechnicalOfficerDashboard extends JFrame {
         setActiveNav(btn);
     }
 
+    /**
+     * Creates a modern live date and time widget card.
+     */
+    private JPanel createDateTimeWidget() {
+        JPanel dateTimePanel = ModernTheme.createCardPanel();
+        dateTimePanel.setLayout(new BorderLayout(10, 5));
+        dateTimePanel.setBorder(new CompoundBorder(
+                new LineBorder(ModernTheme.BORDER, 1, true),
+                new EmptyBorder(12, 20, 12, 20)
+        ));
+
+        JLabel lblTitle = new JLabel("Date & Time:");
+        lblTitle.setFont(ModernTheme.FONT_SMALL);
+        lblTitle.setForeground(ModernTheme.TEXT_MUTED);
+        lblTitle.setHorizontalAlignment(SwingConstants.CENTER); // Centered title
+
+        JLabel lblDateTime = new JLabel();
+        lblDateTime.setFont(ModernTheme.FONT_SUBTITLE);
+        lblDateTime.setForeground(ModernTheme.PRIMARY);
+        lblDateTime.setHorizontalAlignment(SwingConstants.CENTER); // Centered live clock
+
+        // Live clock timer updating every 1 second
+        Timer timer = new Timer(1000, e -> {
+            String currentDateTime = java.time.LocalDateTime.now().format(
+                    java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy - hh:mm:ss a")
+            );
+            lblDateTime.setText(currentDateTime);
+        });
+        timer.start();
+
+        dateTimePanel.add(lblTitle, BorderLayout.NORTH);
+        dateTimePanel.add(lblDateTime, BorderLayout.CENTER);
+
+        return dateTimePanel;
+    }
+
     private JPanel createOverviewPanel() {
         JPanel panel = new JPanel(new BorderLayout(20, 20));
         panel.setBackground(ModernTheme.BG_MAIN);
         panel.setBorder(new EmptyBorder(25, 25, 25, 25));
 
+        // --- 1. Top Section: Date & Time Widget Card ---
+        JPanel dateTimeCard = ModernTheme.createCardPanel();
+        dateTimeCard.setLayout(new BorderLayout(10, 5));
+        dateTimeCard.setBorder(new CompoundBorder(
+                new LineBorder(ModernTheme.BORDER, 1, true),
+                new EmptyBorder(12, 20, 12, 20)
+        ));
+
+        JLabel lblTimeTitle = new JLabel("Current System Date & Time:");
+        lblTimeTitle.setFont(ModernTheme.FONT_SMALL);
+        lblTimeTitle.setForeground(ModernTheme.TEXT_MUTED);
+
+        JLabel lblDateTime = new JLabel();
+        lblDateTime.setFont(ModernTheme.FONT_SUBTITLE);
+        lblDateTime.setForeground(ModernTheme.PRIMARY);
+
+        // Live clock timer updating every 1 second
+        Timer timer = new Timer(1000, e -> {
+            String currentDateTime = java.time.LocalDateTime.now().format(
+                    java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy - hh:mm:ss a")
+            );
+            lblDateTime.setText(currentDateTime);
+        });
+        timer.start();
+
+        dateTimeCard.add(lblTimeTitle, BorderLayout.NORTH);
+        dateTimeCard.add(lblDateTime, BorderLayout.CENTER);
+
+        // --- 2. Stats Row (Sessions, Medicals, Threshold) ---
         JPanel statsRow = new JPanel(new GridLayout(1, 3, 15, 0));
         statsRow.setOpaque(false);
 
@@ -222,23 +287,35 @@ public class TechnicalOfficerDashboard extends JFrame {
         statsRow.add(createStatCard("Medical Certificates Logged", String.valueOf(medCount), ModernTheme.WARNING));
         statsRow.add(createStatCard("Attendance Eligibility", "\u2265 80% Threshold", ModernTheme.SUCCESS));
 
+        // Combine Date/Time Card and Stats Row into a single vertical NORTH panel
+        JPanel topContainer = new JPanel();
+        topContainer.setLayout(new BoxLayout(topContainer, BoxLayout.Y_AXIS));
+        topContainer.setOpaque(false);
+
+        topContainer.add(dateTimeCard);
+        topContainer.add(Box.createRigidArea(new Dimension(0, 15))); // Spacing between date card and stats row
+        topContainer.add(statsRow);
+
+        // --- 3. Center Card (Operational Responsibilities) ---
         JPanel card = ModernTheme.createCardPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBorder(new EmptyBorder(20, 20, 20, 20)); // Added consistent padding inside the card
 
-        JLabel title = new JLabel("Technical Officer Operational Responsibilities (SRS Group 17)");
+        JLabel title = new JLabel("Technical Officer Operational Responsibilities");
         title.setFont(ModernTheme.FONT_SUBTITLE);
         title.setForeground(ModernTheme.PRIMARY);
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JTextArea text = new JTextArea(
-            "\n• Attendance Recording: Record theory and practical attendance session by session (1 to 15) for student batches.\n\n" +
-            "• Attendance Summary & Scenarios: Analyze attendance percentages and verify compliance across the 5 mandatory scenarios:\n" +
-            "   1. More than 80%\n" +
-            "   2. Exactly 80%\n" +
-            "   3. Less than 80% without medicals\n" +
-            "   4. More than 80% with approved medicals\n" +
-            "   5. Less than 80% with approved medicals\n\n" +
-            "• Medical Records: Maintain student medical certificates and verify approval status (APPROVED / NOT_APPROVED) by the University Medical Officer.\n\n" +
-            "• Laboratory Timetables: Inspect department timetable allocations to prepare lab workstations and apparatus."
+                "• Attendance Recording: Record theory and practical attendance session by session (1 to 15) for student batches.\n\n" +
+                        "• Attendance Summary & Scenarios: Analyze attendance percentages and verify compliance across the 5 mandatory scenarios:\n" +
+                        "   1. More than 80%\n" +
+                        "   2. Exactly 80%\n" +
+                        "   3. Less than 80% without medicals\n" +
+                        "   4. More than 80% with approved medicals\n" +
+                        "   5. Less than 80% with approved medicals\n\n" +
+                        "• Medical Records: Maintain student medical certificates and verify approval status (APPROVED / NOT_APPROVED) by the University Medical Officer.\n\n" +
+                        "• Laboratory Timetables: Inspect department timetable allocations to prepare lab workstations and apparatus."
         );
         text.setFont(ModernTheme.FONT_REGULAR);
         text.setEditable(false);
@@ -247,10 +324,13 @@ public class TechnicalOfficerDashboard extends JFrame {
         text.setLineWrap(true);
 
         card.add(title);
+        card.add(Box.createRigidArea(new Dimension(0, 15))); // Spacing between title and text area
         card.add(text);
 
-        panel.add(statsRow, BorderLayout.NORTH);
+        // Add components to the main panel layout
+        panel.add(topContainer, BorderLayout.NORTH);
         panel.add(card, BorderLayout.CENTER);
+
         return panel;
     }
 
