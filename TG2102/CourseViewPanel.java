@@ -17,6 +17,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
+import java.io.File;
 
 /**
  * Panel enabling Undergraduates to view their enrolled courses and download course materials.
@@ -32,6 +33,7 @@ public class CourseViewPanel extends JPanel {
     private JTable materialTable;
     private DefaultTableModel materialTableModel;
     private JLabel lblSelectedCourseMaterials;
+    private final java.util.List<Course> displayedCourses = new java.util.ArrayList<>();
 
     public CourseViewPanel() {
         this.courseDAO = new CourseDAO();
@@ -56,11 +58,17 @@ public class CourseViewPanel extends JPanel {
         title.setFont(ModernTheme.FONT_TITLE);
         title.setForeground(ModernTheme.PRIMARY);
 
+        JPanel headerActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        headerActions.setOpaque(false);
+        JButton btnEnroll = ModernTheme.createPrimaryButton("Enroll in Course");
+        btnEnroll.addActionListener(e -> showEnrollmentDialog());
         JButton btnRefresh = ModernTheme.createSecondaryButton("Refresh Courses");
         btnRefresh.addActionListener(e -> loadEnrolledCourses());
+        headerActions.add(btnEnroll);
+        headerActions.add(btnRefresh);
 
         topBar.add(title, BorderLayout.WEST);
-        topBar.add(btnRefresh, BorderLayout.EAST);
+        topBar.add(headerActions, BorderLayout.EAST);
         add(topBar, BorderLayout.NORTH);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
@@ -118,6 +126,11 @@ public class CourseViewPanel extends JPanel {
 
         materialTable = new JTable(materialTableModel);
         ModernTheme.styleTable(materialTable);
+        materialTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2) openSelectedMaterial();
+            }
+        });
 
         rightPanel.add(new JScrollPane(materialTable), BorderLayout.CENTER);
 
@@ -127,8 +140,51 @@ public class CourseViewPanel extends JPanel {
         add(splitPane, BorderLayout.CENTER);
     }
 
+
+    private void showEnrollmentDialog() {
+        User current = SessionManager.getCurrentUser();
+        if (current == null || current.getUserId() <= 0) {
+            JOptionPane.showMessageDialog(this, "Please log in as a student before enrolling.", "Login Required", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        List<Course> allCourses = courseDAO.getAllCourses();
+        if (allCourses.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No courses are currently available.", "No Courses", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        JComboBox<Course> cmbCourse = new JComboBox<>();
+        for (Course course : allCourses) cmbCourse.addItem(course);
+        JTextField txtAcademicYear = new JTextField(10);
+        JCheckBox chkRepeat = new JCheckBox("Repeat course");
+        JPanel form = new JPanel(new GridLayout(0, 2, 8, 8));
+        form.add(new JLabel("Course:")); form.add(cmbCourse);
+        form.add(new JLabel("Academic Year (e.g. 2026/2027):")); form.add(txtAcademicYear);
+        form.add(new JLabel("Registration type:")); form.add(chkRepeat);
+        int result = JOptionPane.showConfirmDialog(this, form, "Student Course Enrollment", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result != JOptionPane.OK_OPTION) return;
+        Course selected = (Course) cmbCourse.getSelectedItem();
+        String academicYear = txtAcademicYear.getText().trim();
+        if (selected == null || academicYear.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Select a course and enter the academic year.", "Validation", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        try {
+            if (enrollmentDAO.isStudentEnrolled(current.getUserId(), selected.getCourseId(), academicYear, selected.getSemester())) {
+                JOptionPane.showMessageDialog(this, "You are already enrolled in this course for that academic year and semester.", "Already Enrolled", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            boolean enrolled = enrollmentDAO.enrollStudent(current.getUserId(), selected.getCourseId(), academicYear, selected.getSemester(), chkRepeat.isSelected());
+            if (!enrolled) throw new IllegalStateException("The enrollment was not saved.");
+            JOptionPane.showMessageDialog(this, "Course enrollment saved successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            loadEnrolledCourses();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Enrollment failed: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     public void loadEnrolledCourses() {
         courseTableModel.setRowCount(0);
+        displayedCourses.clear();
         User cur = SessionManager.getCurrentUser();
         if (cur == null) return;
 
@@ -136,6 +192,7 @@ public class CourseViewPanel extends JPanel {
         for (CourseEnrollment ce : enrollments) {
             Course c = courseDAO.getCourseById(ce.getCourseId());
             if (c != null) {
+                displayedCourses.add(c);
                 courseTableModel.addRow(new Object[]{
                     c.getCourseCode(),
                     c.getCourseName(),
@@ -153,6 +210,21 @@ public class CourseViewPanel extends JPanel {
         }
     }
 
+
+    private void openSelectedMaterial() {
+        int row = materialTable.getSelectedRow();
+        if (row < 0) return;
+        String path = String.valueOf(materialTableModel.getValueAt(row, 2));
+        try {
+            File file = new File(path);
+            if (!file.exists()) throw new IllegalStateException("The material file cannot be found: " + path);
+            if (!Desktop.isDesktopSupported()) throw new IllegalStateException("File opening is not supported on this computer.");
+            Desktop.getDesktop().open(file);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Unable to open material: " + ex.getMessage(), "Open Material", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void loadMaterialsForSelectedCourse() {
         materialTableModel.setRowCount(0);
         int row = courseTable.getSelectedRow();
@@ -162,17 +234,8 @@ public class CourseViewPanel extends JPanel {
         String name = (String) courseTableModel.getValueAt(row, 1);
         lblSelectedCourseMaterials.setText("Course Materials: " + code + " - " + name);
 
-        // Find course ID
-        List<Course> courses = courseDAO.getAllCourses();
-        int courseId = 0;
-        for (Course c : courses) {
-            if (c.getCourseCode().equalsIgnoreCase(code)) {
-                courseId = c.getCourseId();
-                break;
-            }
-        }
-
-        if (courseId > 0) {
+        if (row >= 0 && row < displayedCourses.size()) {
+            int courseId = displayedCourses.get(row).getCourseId();
             List<CourseMaterial> materials = materialDAO.getMaterialsByCourse(courseId);
             for (CourseMaterial m : materials) {
                 materialTableModel.addRow(new Object[]{

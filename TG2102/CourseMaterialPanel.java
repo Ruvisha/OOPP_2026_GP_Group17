@@ -17,6 +17,10 @@ import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 import java.util.List;
 
 /**
@@ -118,8 +122,11 @@ public class CourseMaterialPanel extends JPanel {
         ModernTheme.styleTable(materialTable);
         materialTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         materialTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting() && materialTable.getSelectedRow() != -1) {
-                populateForm();
+            if (!e.getValueIsAdjusting() && materialTable.getSelectedRow() != -1) populateForm();
+        });
+        materialTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2) openSelectedMaterial();
             }
         });
 
@@ -220,7 +227,30 @@ public class CourseMaterialPanel extends JPanel {
         int res = chooser.showOpenDialog(this);
         if (res == JFileChooser.APPROVE_OPTION) {
             File f = chooser.getSelectedFile();
-            txtFilePath.setText(f.getAbsolutePath());
+            try {
+                Path storage = Path.of(System.getProperty("user.home"), "FacultyAcademicManagementSystem", "course-materials");
+                Files.createDirectories(storage);
+                String safeName = UUID.randomUUID() + "_" + f.getName().replaceAll("[^A-Za-z0-9._-]", "_");
+                Path target = storage.resolve(safeName);
+                Files.copy(f.toPath(), target, StandardCopyOption.REPLACE_EXISTING);
+                txtFilePath.setText(target.toAbsolutePath().toString());
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Could not copy the selected file: " + ex.getMessage(), "File Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+
+    private void openSelectedMaterial() {
+        try {
+            String path = txtFilePath.getText().trim();
+            if (path.isEmpty()) throw new IllegalStateException("No file is selected.");
+            File file = new File(path);
+            if (!file.exists()) throw new IllegalStateException("The stored file cannot be found: " + path);
+            if (!Desktop.isDesktopSupported()) throw new IllegalStateException("Desktop file opening is not supported on this computer.");
+            Desktop.getDesktop().open(file);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Unable to open material: " + ex.getMessage(), "Open File", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -229,7 +259,12 @@ public class CourseMaterialPanel extends JPanel {
         cmbCourseFilter.addItem(new CourseFilterItem(0, "All Courses"));
 
         cmbFormCourse.removeAllItems();
-        List<Course> courses = courseDAO.getAllCourses();
+        User current = SessionManager.getCurrentUser();
+        if (current == null || current.getUserId() <= 0) {
+            JOptionPane.showMessageDialog(this, "Please log in as a lecturer to manage course materials.", "Login Required", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        List<Course> courses = courseDAO.getCoursesByLecturer(current.getUserId());
         for (Course c : courses) {
             CourseFilterItem item = new CourseFilterItem(c.getCourseId(), c.getCourseCode() + " - " + c.getCourseName());
             cmbCourseFilter.addItem(item);
@@ -240,11 +275,10 @@ public class CourseMaterialPanel extends JPanel {
     public void loadMaterials(int courseId) {
         tableModel.setRowCount(0);
         List<CourseMaterial> list;
-        if (courseId == 0) {
-            list = courseService.getAllMaterials();
-        } else {
-            list = courseService.getMaterialsByCourse(courseId);
-        }
+        User current = SessionManager.getCurrentUser();
+        if (current == null) return;
+        if (courseId == 0) list = courseService.getMaterialsByLecturer(current.getUserId());
+        else list = courseService.getMaterialsByCourseAndLecturer(courseId, current.getUserId());
 
         for (CourseMaterial m : list) {
             tableModel.addRow(new Object[]{
@@ -263,7 +297,9 @@ public class CourseMaterialPanel extends JPanel {
         if (row == -1) return;
 
         int id = (int) tableModel.getValueAt(row, 0);
-        List<CourseMaterial> list = courseService.getAllMaterials();
+        User current = SessionManager.getCurrentUser();
+        if (current == null) return;
+        List<CourseMaterial> list = courseService.getMaterialsByLecturer(current.getUserId());
         for (CourseMaterial m : list) {
             if (m.getMaterialId() == id) {
                 txtMaterialId.setText(String.valueOf(m.getMaterialId()));
@@ -297,7 +333,8 @@ public class CourseMaterialPanel extends JPanel {
             if (item == null || item.id <= 0) throw new ValidationException("Please select a target course.");
 
             User current = SessionManager.getCurrentUser();
-            int lecturerId = current != null ? current.getUserId() : 2;
+            if (current == null || current.getUserId() <= 0) throw new ValidationException("Please log in as a lecturer.");
+            int lecturerId = current.getUserId();
 
             CourseMaterial cm = new CourseMaterial(
                 0,
@@ -308,7 +345,8 @@ public class CourseMaterialPanel extends JPanel {
                 txtFilePath.getText().trim()
             );
 
-            courseService.addMaterial(cm);
+            boolean saved = courseService.addMaterial(cm);
+            if (!saved) throw new ValidationException("Material was not saved. Check that this course is assigned to your lecturer account.");
             JOptionPane.showMessageDialog(this, "Course material uploaded successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             CourseFilterItem sel = (CourseFilterItem) cmbCourseFilter.getSelectedItem();
             loadMaterials(sel != null ? sel.id : 0);
@@ -331,16 +369,19 @@ public class CourseMaterialPanel extends JPanel {
             CourseFilterItem item = (CourseFilterItem) cmbFormCourse.getSelectedItem();
             if (item == null || item.id <= 0) throw new ValidationException("Please select a target course.");
 
+            User current = SessionManager.getCurrentUser();
+            if (current == null) throw new ValidationException("Please log in as a lecturer.");
             CourseMaterial cm = new CourseMaterial(
                 id,
                 item.id,
-                0,
+                current.getUserId(),
                 txtTitle.getText().trim(),
                 txtDescription.getText().trim(),
                 txtFilePath.getText().trim()
             );
 
-            courseService.updateMaterial(cm);
+            boolean updated = courseService.updateMaterial(cm);
+            if (!updated) throw new ValidationException("Material was not updated. You can only update your own materials.");
             JOptionPane.showMessageDialog(this, "Course material updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             CourseFilterItem sel = (CourseFilterItem) cmbCourseFilter.getSelectedItem();
             loadMaterials(sel != null ? sel.id : 0);
@@ -369,7 +410,10 @@ public class CourseMaterialPanel extends JPanel {
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                courseService.deleteMaterial(id);
+                User current = SessionManager.getCurrentUser();
+                if (current == null) throw new ValidationException("Please log in as a lecturer.");
+                boolean deleted = courseService.deleteMaterial(id, current.getUserId());
+                if (!deleted) throw new ValidationException("Material was not deleted. You can only delete your own materials.");
                 JOptionPane.showMessageDialog(this, "Course material deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
                 CourseFilterItem sel = (CourseFilterItem) cmbCourseFilter.getSelectedItem();
                 loadMaterials(sel != null ? sel.id : 0);

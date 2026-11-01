@@ -1,6 +1,6 @@
 package com.fot.ams.dao;
 
-import com.fot.ams.database.DatabaseConnection;
+import com.fot.ams.tg2102.TG2102DatabaseConnection;
 import com.fot.ams.exception.DatabaseException;
 import com.fot.ams.model.CourseMaterial;
 
@@ -38,7 +38,7 @@ public class CourseMaterialDAO {
     public List<CourseMaterial> getAllMaterials() {
         List<CourseMaterial> list = new ArrayList<>();
         String sql = BASE_SELECT + "ORDER BY cm.uploaded_at DESC";
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = TG2102DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
@@ -54,7 +54,7 @@ public class CourseMaterialDAO {
     public List<CourseMaterial> getMaterialsByCourse(int courseId) {
         List<CourseMaterial> list = new ArrayList<>();
         String sql = BASE_SELECT + "WHERE cm.course_id = ? ORDER BY cm.uploaded_at DESC";
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = TG2102DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, courseId);
@@ -69,10 +69,30 @@ public class CourseMaterialDAO {
         return list;
     }
 
+    public List<CourseMaterial> getMaterialsByLecturer(int lecturerId) {
+        List<CourseMaterial> list = new ArrayList<>();
+        String sql = BASE_SELECT + "WHERE cm.lecturer_id = ? ORDER BY cm.uploaded_at DESC";
+        try (Connection conn = TG2102DatabaseConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, lecturerId);
+            try (ResultSet rs = ps.executeQuery()) { while (rs.next()) list.add(mapResultSetToMaterial(rs)); }
+        } catch (SQLException e) { throw new DatabaseException("Failed to fetch lecturer materials: " + e.getMessage(), e); }
+        return list;
+    }
+
+    public List<CourseMaterial> getMaterialsByCourseAndLecturer(int courseId, int lecturerId) {
+        List<CourseMaterial> list = new ArrayList<>();
+        String sql = BASE_SELECT + "WHERE cm.course_id = ? AND cm.lecturer_id = ? ORDER BY cm.uploaded_at DESC";
+        try (Connection conn = TG2102DatabaseConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, courseId); ps.setInt(2, lecturerId);
+            try (ResultSet rs = ps.executeQuery()) { while (rs.next()) list.add(mapResultSetToMaterial(rs)); }
+        } catch (SQLException e) { throw new DatabaseException("Failed to fetch course materials: " + e.getMessage(), e); }
+        return list;
+    }
+
     public boolean addMaterial(CourseMaterial material) {
         String sql = "INSERT INTO course_materials (course_id, lecturer_id, title, description, file_path) " +
-                     "VALUES (?, ?, ?, ?, ?)";
-        try (Connection conn = DatabaseConnection.getConnection();
+                     "SELECT ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM course_lecturers cl WHERE cl.course_id = ? AND cl.lecturer_id = ?)";
+        try (Connection conn = TG2102DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setInt(1, material.getCourseId());
@@ -80,6 +100,8 @@ public class CourseMaterialDAO {
             stmt.setString(3, material.getTitle());
             stmt.setString(4, material.getDescription());
             stmt.setString(5, material.getFilePath());
+            stmt.setInt(6, material.getCourseId());
+            stmt.setInt(7, material.getLecturerId());
 
             int affected = stmt.executeUpdate();
             if (affected > 0) {
@@ -98,8 +120,9 @@ public class CourseMaterialDAO {
 
     public boolean updateMaterial(CourseMaterial material) {
         String sql = "UPDATE course_materials SET course_id = ?, title = ?, description = ?, file_path = ? " +
-                     "WHERE material_id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
+                     "WHERE material_id = ? AND lecturer_id = ? " +
+                     "AND EXISTS (SELECT 1 FROM course_lecturers cl WHERE cl.course_id = ? AND cl.lecturer_id = ?)";
+        try (Connection conn = TG2102DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, material.getCourseId());
@@ -107,6 +130,9 @@ public class CourseMaterialDAO {
             stmt.setString(3, material.getDescription());
             stmt.setString(4, material.getFilePath());
             stmt.setInt(5, material.getMaterialId());
+            stmt.setInt(6, material.getLecturerId());
+            stmt.setInt(7, material.getCourseId());
+            stmt.setInt(8, material.getLecturerId());
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -114,12 +140,13 @@ public class CourseMaterialDAO {
         }
     }
 
-    public boolean deleteMaterial(int materialId) {
-        String sql = "DELETE FROM course_materials WHERE material_id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
+    public boolean deleteMaterial(int materialId, int lecturerId) {
+        String sql = "DELETE FROM course_materials WHERE material_id = ? AND lecturer_id = ?";
+        try (Connection conn = TG2102DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, materialId);
+            stmt.setInt(2, lecturerId);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new DatabaseException("Failed to delete course material: " + e.getMessage(), e);

@@ -13,7 +13,7 @@ public class CourseEnrollment {
     private int courseId;
     private String courseCode;
     private String courseName;
-    private String academicYear = "2024/2025";
+    private String academicYear = "";
     private int semester = 1;
     private boolean isRepeat = false;
     private Timestamp enrolledAt;

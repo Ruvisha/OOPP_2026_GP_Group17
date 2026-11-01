@@ -45,6 +45,9 @@ public class CourseService {
         ValidationUtil.validateNotEmpty(course.getCourseCode(), "Course Code");
         ValidationUtil.validateNotEmpty(course.getCourseName(), "Course Name");
         ValidationUtil.validatePositive(course.getCredits(), "Credits");
+        if (course.getStudyYear() < 1 || course.getStudyYear() > 4) throw new ValidationException("Study year must be between 1 and 4.");
+        if (course.getSemester() < 1 || course.getSemester() > 2) throw new ValidationException("Semester must be 1 or 2.");
+        if (course.getDepartmentId() <= 0 || course.getLecturerId() <= 0) throw new ValidationException("Select a valid department and lecturer.");
 
         if (courseDAO.isCourseCodeTaken(course.getCourseCode().trim(), 0)) {
             throw new ValidationException("Course Code '" + course.getCourseCode() + "' is already registered.");
@@ -57,6 +60,9 @@ public class CourseService {
         ValidationUtil.validateNotEmpty(course.getCourseCode(), "Course Code");
         ValidationUtil.validateNotEmpty(course.getCourseName(), "Course Name");
         ValidationUtil.validatePositive(course.getCredits(), "Credits");
+        if (course.getStudyYear() < 1 || course.getStudyYear() > 4) throw new ValidationException("Study year must be between 1 and 4.");
+        if (course.getSemester() < 1 || course.getSemester() > 2) throw new ValidationException("Semester must be 1 or 2.");
+        if (course.getDepartmentId() <= 0 || course.getLecturerId() <= 0) throw new ValidationException("Select a valid department and lecturer.");
 
         if (courseDAO.isCourseCodeTaken(course.getCourseCode().trim(), course.getCourseId())) {
             throw new ValidationException("Course Code '" + course.getCourseCode() + "' is already registered.");
@@ -73,6 +79,9 @@ public class CourseService {
     public List<CourseMaterial> getAllMaterials() {
         return materialDAO.getAllMaterials();
     }
+
+    public List<CourseMaterial> getMaterialsByLecturer(int lecturerId) { return materialDAO.getMaterialsByLecturer(lecturerId); }
+    public List<CourseMaterial> getMaterialsByCourseAndLecturer(int courseId, int lecturerId) { return materialDAO.getMaterialsByCourseAndLecturer(courseId, lecturerId); }
 
     public List<CourseMaterial> getMaterialsByCourse(int courseId) {
         return materialDAO.getMaterialsByCourse(courseId);
@@ -91,8 +100,8 @@ public class CourseService {
         return materialDAO.updateMaterial(material);
     }
 
-    public boolean deleteMaterial(int materialId) {
-        return materialDAO.deleteMaterial(materialId);
+    public boolean deleteMaterial(int materialId, int lecturerId) {
+        return materialDAO.deleteMaterial(materialId, lecturerId);
     }
 
     // Enrollment Management
@@ -100,7 +109,14 @@ public class CourseService {
         return enrollmentDAO.getEnrollmentsByCourse(courseId);
     }
 
-    public boolean enrollStudent(int studentId, int courseId, String academicYear, int semester, boolean isRepeat) {
-        return enrollmentDAO.enrollStudent(studentId, courseId, academicYear, semester, isRepeat);
+    public boolean enrollStudent(int studentId, int courseId, String academicYear, int semester, boolean isRepeat) throws ValidationException {
+        if (studentId <= 0 || courseId <= 0) throw new ValidationException("Select a valid student and course.");
+        ValidationUtil.validateNotEmpty(academicYear, "Academic Year");
+        if (semester < 1 || semester > 2) throw new ValidationException("Semester must be 1 or 2.");
+        if (enrollmentDAO.isStudentEnrolled(studentId, courseId, academicYear.trim(), semester))
+            throw new ValidationException("This student is already enrolled in this course for the selected academic year and semester.");
+        return enrollmentDAO.enrollStudent(studentId, courseId, academicYear.trim(), semester, isRepeat);
     }
+
+    public boolean cancelEnrollment(int enrollmentId) { return enrollmentDAO.deleteEnrollment(enrollmentId); }
 }
