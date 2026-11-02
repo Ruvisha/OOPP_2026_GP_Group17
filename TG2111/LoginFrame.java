@@ -115,10 +115,14 @@ public class LoginFrame extends JFrame {
         JPanel formCard = ModernTheme.createCardPanel();
         formCard.setLayout(new BoxLayout(formCard, BoxLayout.Y_AXIS));
 <<<<<<< HEAD
+<<<<<<< HEAD
         formCard.setPreferredSize(new Dimension(460, 430));
 =======
         formCard.setPreferredSize(new Dimension(460, 480));
 >>>>>>> origin/submain
+=======
+        formCard.setPreferredSize(new Dimension(460, 430));
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
         formCard.setBorder(new CompoundBorder(new LineBorder(ModernTheme.BORDER, 1), new EmptyBorder(30, 35, 30, 35)));
 
         JLabel loginHeader = new JLabel("Portal Login");
@@ -184,6 +188,7 @@ public class LoginFrame extends JFrame {
         buttonRow.add(exitButton);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         // Quick Demo Accounts Fill Panel (helpful for examiners/reviewers)
         JLabel demoLabel = new JLabel("Quick Demo Credentials:");
@@ -202,6 +207,8 @@ public class LoginFrame extends JFrame {
         demoButtons.add(btnStudent);
 
 >>>>>>> origin/submain
+=======
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
         formCard.add(loginHeader);
         formCard.add(Box.createRigidArea(new Dimension(0, 4)));
         formCard.add(loginSub);
@@ -218,12 +225,15 @@ public class LoginFrame extends JFrame {
         formCard.add(Box.createRigidArea(new Dimension(0, 10)));
         formCard.add(buttonRow);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         formCard.add(Box.createRigidArea(new Dimension(0, 20)));
         formCard.add(demoLabel);
         formCard.add(Box.createRigidArea(new Dimension(0, 6)));
         formCard.add(demoButtons);
 >>>>>>> origin/submain
+=======
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
 
         formContainer.add(formCard);
 
@@ -255,6 +265,7 @@ public class LoginFrame extends JFrame {
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     private JButton createQuickBtn(String title, String user, String pass) {
         JButton btn = new JButton(title);
@@ -272,6 +283,8 @@ public class LoginFrame extends JFrame {
     }
 
 >>>>>>> origin/submain
+=======
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
     private void performLogin() {
         String username = usernameField.getText();
         String password = new String(passwordField.getPassword());

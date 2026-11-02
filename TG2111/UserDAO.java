@@ -57,9 +57,13 @@ public class UserDAO {
         }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         user.setRoleSpecificId(rs.getString("role_specific_id"));
 =======
 >>>>>>> origin/submain
+=======
+        user.setRoleSpecificId(rs.getString("role_specific_id"));
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
         user.setProfilePic(profilePic != null ? profilePic : "default_avatar.png");
         user.setDepartmentName(departmentName);
         user.setCreatedAt(createdAt);
@@ -144,6 +148,9 @@ public class UserDAO {
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
     public String getNextRoleSpecificId(int roleId) {
         String sql = "SELECT next_value FROM role_user_id_sequences WHERE role_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -177,6 +184,7 @@ public class UserDAO {
         return String.format("%04d", next);
     }
 
+<<<<<<< HEAD
     public boolean addUser(User user) {
         String sql = "INSERT INTO users (role_specific_id, username, password_hash, role_id, full_name, email, phone, " +
                      "address, profile_pic, department_id, status, student_reg_no, academic_year, " +
@@ -243,63 +251,77 @@ public class UserDAO {
                 stmt.setNull(17, Types.VARCHAR);
                 stmt.setNull(18, Types.VARCHAR);
 =======
+=======
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
     public boolean addUser(User user) {
-        String sql = "INSERT INTO users (username, password_hash, role_id, full_name, email, phone, " +
+        String sql = "INSERT INTO users (role_specific_id, username, password_hash, role_id, full_name, email, phone, " +
                      "address, profile_pic, department_id, status, student_reg_no, academic_year, " +
                      "current_semester, student_type, designation, office_room, assigned_lab) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getPasswordHash());
-            stmt.setInt(3, user.getRoleId());
-            stmt.setString(4, user.getFullName());
-            stmt.setString(5, user.getEmail());
-            stmt.setString(6, user.getPhone());
-            stmt.setString(7, user.getAddress());
-            stmt.setString(8, user.getProfilePic());
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            String roleSpecificId = allocateRoleSpecificId(conn, user.getRoleId());
+            try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            user.setRoleSpecificId(roleSpecificId);
+            String firstName = user.getFullName() == null ? "" : user.getFullName().trim().split("\\s+")[0];
+            firstName = firstName.toLowerCase().replaceAll("[^a-z0-9]+", "");
+            String generatedEmail = firstName + "." + roleSpecificId + "@fot.ruh.ac.lk";
+            user.setEmail(generatedEmail);
+            stmt.setString(1, roleSpecificId);
+            stmt.setString(2, user.getUsername());
+            stmt.setString(3, user.getPasswordHash());
+            stmt.setInt(4, user.getRoleId());
+            stmt.setString(5, user.getFullName());
+            stmt.setString(6, generatedEmail);
+            stmt.setString(7, user.getPhone());
+            stmt.setString(8, user.getAddress());
+            stmt.setString(9, user.getProfilePic());
             if (user.getDepartmentId() != null) {
-                stmt.setInt(9, user.getDepartmentId());
+                stmt.setInt(10, user.getDepartmentId());
             } else {
-                stmt.setNull(9, Types.INTEGER);
+                stmt.setNull(10, Types.INTEGER);
             }
-            stmt.setString(10, user.getStatus() != null ? user.getStatus() : "ACTIVE");
+            stmt.setString(11, user.getStatus() != null ? user.getStatus() : "ACTIVE");
 
             if (user instanceof Undergraduate ug) {
-                stmt.setString(11, ug.getStudentRegNo());
-                stmt.setString(12, ug.getAcademicYear());
-                stmt.setInt(13, ug.getCurrentSemester());
-                stmt.setString(14, ug.getStudentType());
-                stmt.setNull(15, Types.VARCHAR);
+                // Keep student registration number equal to the undergraduate role-specific ID.
+                ug.setStudentRegNo(roleSpecificId);
+                stmt.setString(12, roleSpecificId);
+                stmt.setString(13, ug.getAcademicYear());
+                stmt.setInt(14, ug.getCurrentSemester());
+                stmt.setString(15, ug.getStudentType());
                 stmt.setNull(16, Types.VARCHAR);
                 stmt.setNull(17, Types.VARCHAR);
+                stmt.setNull(18, Types.VARCHAR);
             } else if (user instanceof Lecturer lec) {
-                stmt.setNull(11, Types.VARCHAR);
                 stmt.setNull(12, Types.VARCHAR);
-                stmt.setNull(13, Types.INTEGER);
-                stmt.setNull(14, Types.VARCHAR);
-                stmt.setString(15, lec.getDesignation());
-                stmt.setString(16, lec.getOfficeRoom());
-                stmt.setNull(17, Types.VARCHAR);
+                stmt.setNull(13, Types.VARCHAR);
+                stmt.setNull(14, Types.INTEGER);
+                stmt.setNull(15, Types.VARCHAR);
+                stmt.setString(16, lec.getDesignation());
+                stmt.setString(17, lec.getOfficeRoom());
+                stmt.setNull(18, Types.VARCHAR);
             } else if (user instanceof TechnicalOfficer to) {
-                stmt.setNull(11, Types.VARCHAR);
                 stmt.setNull(12, Types.VARCHAR);
-                stmt.setNull(13, Types.INTEGER);
-                stmt.setNull(14, Types.VARCHAR);
-                stmt.setString(15, to.getDesignation());
-                stmt.setNull(16, Types.VARCHAR);
-                stmt.setString(17, to.getAssignedLab());
-            } else if (user instanceof Admin admin) {
-                stmt.setNull(11, Types.VARCHAR);
-                stmt.setNull(12, Types.VARCHAR);
-                stmt.setNull(13, Types.INTEGER);
-                stmt.setNull(14, Types.VARCHAR);
-                stmt.setString(15, admin.getDesignation());
-                stmt.setNull(16, Types.VARCHAR);
+                stmt.setNull(13, Types.VARCHAR);
+                stmt.setNull(14, Types.INTEGER);
+                stmt.setNull(15, Types.VARCHAR);
+                stmt.setString(16, to.getDesignation());
                 stmt.setNull(17, Types.VARCHAR);
+<<<<<<< HEAD
 >>>>>>> origin/submain
+=======
+                stmt.setString(18, to.getAssignedLab());
+            } else if (user instanceof Admin admin) {
+                stmt.setNull(12, Types.VARCHAR);
+                stmt.setNull(13, Types.VARCHAR);
+                stmt.setNull(14, Types.INTEGER);
+                stmt.setNull(15, Types.VARCHAR);
+                stmt.setString(16, admin.getDesignation());
+                stmt.setNull(17, Types.VARCHAR);
+                stmt.setNull(18, Types.VARCHAR);
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
             }
 
             int affected = stmt.executeUpdate();
@@ -310,14 +332,20 @@ public class UserDAO {
                     }
                 }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
                 conn.commit();
                 return true;
             }
             }
+<<<<<<< HEAD
 =======
                 return true;
             }
 >>>>>>> origin/submain
+=======
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
         } catch (SQLException e) {
             throw new DatabaseException("Failed to insert user: " + e.getMessage(), e);
         }
