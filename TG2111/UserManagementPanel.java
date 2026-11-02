@@ -5,9 +5,26 @@ import com.fot.ams.dao.RoleDAO;
 import com.fot.ams.exception.ValidationException;
 import com.fot.ams.model.*;
 import com.fot.ams.service.UserService;
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
 import com.fot.ams.dao.UserDAO;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+=======
+>>>>>>> origin/submain
+=======
+import com.fot.ams.dao.UserDAO;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
+=======
+
+import com.fot.ams.dao.UserDAO;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+
+>>>>>>> origin/TG/2024/2111
 import com.fot.ams.ui.common.ModernTheme;
 
 import javax.swing.*;
@@ -29,7 +46,20 @@ public class UserManagementPanel extends JPanel {
     private JTable userTable;
     private DefaultTableModel tableModel;
     private JComboBox<String> roleFilterCombo;
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
     private JTabbedPane roleTabs;
+=======
+>>>>>>> origin/submain
+=======
+    private JTabbedPane roleTabs;
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
+=======
+
+    private JTabbedPane roleTabs;
+
+>>>>>>> origin/TG/2024/2111
 
     // Form inputs
     private JTextField txtUserId;
@@ -91,6 +121,9 @@ public class UserManagementPanel extends JPanel {
         topBar.setBackground(Color.WHITE);
         topBar.setBorder(new LineBorder(ModernTheme.BORDER, 1));
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
         roleFilterCombo = new JComboBox<>(new String[]{"All Roles", "Admin", "Lecturer", "Technical Officer", "Undergraduate"});
         roleFilterCombo.setSelectedIndex(0);
         roleFilterCombo.addActionListener(e -> loadUsers(roleFilterCombo.getSelectedIndex()));
@@ -133,6 +166,78 @@ public class UserManagementPanel extends JPanel {
             cmbRole.setSelectedIndex(roleId - 1);
         });
         topBar.add(roleTabs);
+=======
+        JLabel filterLabel = new JLabel("Filter by Role:");
+        filterLabel.setFont(ModernTheme.FONT_BOLD);
+=======
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
+=======
+        JLabel filterLabel = new JLabel("Filter by Role:");
+        filterLabel.setFont(ModernTheme.FONT_BOLD);
+>>>>>>> origin/TG/2024/2111
+        roleFilterCombo = new JComboBox<>(new String[]{"All Roles", "Admin", "Lecturer", "Technical Officer", "Undergraduate"});
+        roleFilterCombo.setSelectedIndex(0);
+        roleFilterCombo.addActionListener(e -> loadUsers(roleFilterCombo.getSelectedIndex()));
+        roleFilterCombo.setVisible(false);
+
+        roleTabs = new JTabbedPane();
+        String[] roleNames = {"Admin Management", "Lecturer Management", "Technical Officer Management", "Undergraduate Management"};
+        for (int i = 0; i < roleNames.length; i++) {
+            final int roleId = i + 1;
+            JPanel tabActions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
+            JButton addRole = ModernTheme.createPrimaryButton("Add");
+            JButton editRole = ModernTheme.createSecondaryButton("Edit");
+            JButton updateRole = ModernTheme.createSuccessButton("Update");
+            JButton deleteRole = ModernTheme.createDangerButton("Delete");
+            JButton refreshRole = ModernTheme.createSecondaryButton("Refresh");
+            addRole.addActionListener(e -> {
+                roleFilterCombo.setSelectedIndex(roleId);
+                clearForm();
+                cmbRole.setSelectedIndex(roleId - 1);
+            });
+            editRole.addActionListener(e -> selectCurrentUser());
+            updateRole.addActionListener(e -> handleUpdateUser());
+            deleteRole.addActionListener(e -> handleDeleteUser());
+            refreshRole.addActionListener(e -> {
+                roleFilterCombo.setSelectedIndex(roleId);
+                loadUsers(roleId);
+            });
+            tabActions.add(addRole);
+            tabActions.add(editRole);
+            tabActions.add(updateRole);
+            tabActions.add(deleteRole);
+            tabActions.add(refreshRole);
+            roleTabs.addTab(roleNames[i], tabActions);
+        }
+        roleTabs.addChangeListener(e -> {
+            int roleId = roleTabs.getSelectedIndex() + 1;
+            roleFilterCombo.setSelectedIndex(roleId);
+            loadUsers(roleId);
+            clearForm();
+            cmbRole.setSelectedIndex(roleId - 1);
+        });
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/TG/2024/2111
+
+        JButton btnRefresh = ModernTheme.createSecondaryButton("Refresh List");
+        btnRefresh.addActionListener(e -> loadUsers(roleFilterCombo.getSelectedIndex()));
+
+        topBar.add(filterLabel);
+        topBar.add(roleFilterCombo);
+        topBar.add(btnRefresh);
+<<<<<<< HEAD
+>>>>>>> origin/submain
+=======
+        topBar.add(roleTabs);
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
+=======
+
+        topBar.add(roleTabs);
+
+>>>>>>> origin/TG/2024/2111
 
         // Center: Split Pane (Left Table, Right Form)
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
@@ -144,7 +249,22 @@ public class UserManagementPanel extends JPanel {
         tablePanel.setBackground(Color.WHITE);
         tablePanel.setBorder(new LineBorder(ModernTheme.BORDER, 1));
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
         String[] cols = {"User Key", "ID", "Role", "Username", "Full Name", "Email", "Phone", "Dept", "Reg No / Details", "Status"};
+=======
+        String[] cols = {"ID", "Role", "Username", "Full Name", "Email", "Phone", "Dept", "Reg No / Details", "Status"};
+>>>>>>> origin/submain
+=======
+        String[] cols = {"User Key", "ID", "Role", "Username", "Full Name", "Email", "Phone", "Dept", "Reg No / Details", "Status"};
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
+=======
+        String[] cols = {"ID", "Role", "Username", "Full Name", "Email", "Phone", "Dept", "Reg No / Details", "Status"};
+
+        String[] cols = {"User Key", "ID", "Role", "Username", "Full Name", "Email", "Phone", "Dept", "Reg No / Details", "Status"};
+
+>>>>>>> origin/TG/2024/2111
         tableModel = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -153,9 +273,26 @@ public class UserManagementPanel extends JPanel {
         };
 
         userTable = new JTable(tableModel);
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
         userTable.getColumnModel().getColumn(0).setMinWidth(0);
         userTable.getColumnModel().getColumn(0).setMaxWidth(0);
         userTable.getColumnModel().getColumn(0).setPreferredWidth(0);
+=======
+>>>>>>> origin/submain
+=======
+        userTable.getColumnModel().getColumn(0).setMinWidth(0);
+        userTable.getColumnModel().getColumn(0).setMaxWidth(0);
+        userTable.getColumnModel().getColumn(0).setPreferredWidth(0);
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
+=======
+
+        userTable.getColumnModel().getColumn(0).setMinWidth(0);
+        userTable.getColumnModel().getColumn(0).setMaxWidth(0);
+        userTable.getColumnModel().getColumn(0).setPreferredWidth(0);
+
+>>>>>>> origin/TG/2024/2111
         ModernTheme.styleTable(userTable);
         userTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         userTable.getSelectionModel().addListSelectionListener(e -> {
@@ -198,7 +335,22 @@ public class UserManagementPanel extends JPanel {
 
         txtRegNo = new JTextField();
         cmbStudentType = new JComboBox<>(new String[]{"REGULAR", "REPEAT", "BATCH_MISSED"});
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
         txtAcademicYear = new JTextField("2024");
+=======
+        txtAcademicYear = new JTextField("2024/2025");
+>>>>>>> origin/submain
+=======
+        txtAcademicYear = new JTextField("2024");
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
+=======
+        txtAcademicYear = new JTextField("2024/2025");
+
+        txtAcademicYear = new JTextField("2024");
+
+>>>>>>> origin/TG/2024/2111
         spinSemester = new JSpinner(new SpinnerNumberModel(1, 1, 8, 1));
         txtDesignation = new JTextField();
         txtExtraDetail = new JTextField();
@@ -255,6 +407,13 @@ public class UserManagementPanel extends JPanel {
         btnDelete.addActionListener(e -> handleDeleteUser());
         btnClear.addActionListener(e -> clearForm());
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
+=======
+>>>>>>> origin/TG/2024/2111
         txtFullName.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { refreshGeneratedIdentity(); }
             public void removeUpdate(DocumentEvent e) { refreshGeneratedIdentity(); }
@@ -269,6 +428,10 @@ public class UserManagementPanel extends JPanel {
             updateRoleSpecificFieldsVisibility();
             refreshGeneratedIdentity();
         });
+
+        updateRoleSpecificFieldsVisibility();
+    }
+
 
         updateRoleSpecificFieldsVisibility();
     }
@@ -352,6 +515,17 @@ public class UserManagementPanel extends JPanel {
         }
     }
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+        updateRoleSpecificFieldsVisibility();
+    }
+
+>>>>>>> origin/submain
+=======
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
+=======
+>>>>>>> origin/TG/2024/2111
     private JPanel createFieldRow(String labelText, JComponent comp) {
         JPanel p = new JPanel(new BorderLayout(5, 2));
         p.setOpaque(false);
@@ -415,7 +589,20 @@ public class UserManagementPanel extends JPanel {
 
             tableModel.addRow(new Object[]{
                 u.getUserId(),
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
                 u.getRoleSpecificId() != null ? u.getRoleSpecificId() : "",
+=======
+>>>>>>> origin/submain
+=======
+                u.getRoleSpecificId() != null ? u.getRoleSpecificId() : "",
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
+=======
+
+                u.getRoleSpecificId() != null ? u.getRoleSpecificId() : "",
+
+>>>>>>> origin/TG/2024/2111
                 u.getRoleName(),
                 u.getUsername(),
                 u.getFullName(),
@@ -461,7 +648,22 @@ public class UserManagementPanel extends JPanel {
         if (user instanceof Undergraduate ug) {
             txtRegNo.setText(ug.getStudentRegNo() != null ? ug.getStudentRegNo() : "");
             cmbStudentType.setSelectedItem(ug.getStudentType());
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
             txtAcademicYear.setText(ug.getAcademicYear() != null ? ug.getAcademicYear() : "2024");
+=======
+            txtAcademicYear.setText(ug.getAcademicYear() != null ? ug.getAcademicYear() : "2024/2025");
+>>>>>>> origin/submain
+=======
+            txtAcademicYear.setText(ug.getAcademicYear() != null ? ug.getAcademicYear() : "2024");
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
+=======
+            txtAcademicYear.setText(ug.getAcademicYear() != null ? ug.getAcademicYear() : "2024/2025");
+
+            txtAcademicYear.setText(ug.getAcademicYear() != null ? ug.getAcademicYear() : "2024");
+
+>>>>>>> origin/TG/2024/2111
             spinSemester.setValue(ug.getCurrentSemester());
         } else if (user instanceof Lecturer lec) {
             txtDesignation.setText(lec.getDesignation() != null ? lec.getDesignation() : "");
@@ -491,7 +693,22 @@ public class UserManagementPanel extends JPanel {
         cmbStatus.setSelectedItem("ACTIVE");
         txtRegNo.setText("");
         cmbStudentType.setSelectedItem("REGULAR");
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
         txtAcademicYear.setText("2024");
+=======
+        txtAcademicYear.setText("2024/2025");
+>>>>>>> origin/submain
+=======
+        txtAcademicYear.setText("2024");
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
+=======
+        txtAcademicYear.setText("2024/2025");
+
+        txtAcademicYear.setText("2024");
+
+>>>>>>> origin/TG/2024/2111
         spinSemester.setValue(1);
         txtDesignation.setText("");
         txtExtraDetail.setText("");
@@ -500,7 +717,20 @@ public class UserManagementPanel extends JPanel {
 
     private void handleAddUser() {
         try {
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
             refreshGeneratedIdentity();
+=======
+>>>>>>> origin/submain
+=======
+            refreshGeneratedIdentity();
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
+=======
+
+            refreshGeneratedIdentity();
+
+>>>>>>> origin/TG/2024/2111
             int roleId = cmbRole.getSelectedIndex() + 1;
             String username = txtUsername.getText();
             String password = new String(txtPassword.getPassword());
@@ -529,8 +759,25 @@ public class UserManagementPanel extends JPanel {
                     break;
                 case 4:
                     Undergraduate ug = new Undergraduate(0, username, "", fullName, email, phone, address, deptId,
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
                         (txtRegNo.getText().isBlank() ? nextStudentRegNo(txtAcademicYear.getText()) : txtRegNo.getText()),
                         txtAcademicYear.getText(), (int) spinSemester.getValue(),
+=======
+                        txtRegNo.getText(), txtAcademicYear.getText(), (int) spinSemester.getValue(),
+>>>>>>> origin/submain
+=======
+                        (txtRegNo.getText().isBlank() ? nextStudentRegNo(txtAcademicYear.getText()) : txtRegNo.getText()),
+                        txtAcademicYear.getText(), (int) spinSemester.getValue(),
+>>>>>>> ba9a69d675feb45afd9c8584cce484820d3796b0
+=======
+                        txtRegNo.getText(), txtAcademicYear.getText(), (int) spinSemester.getValue(),
+
+                        (txtRegNo.getText().isBlank() ? nextStudentRegNo(txtAcademicYear.getText()) : txtRegNo.getText()),
+                        txtAcademicYear.getText(), (int) spinSemester.getValue(),
+
+>>>>>>> origin/TG/2024/2111
                         (String) cmbStudentType.getSelectedItem());
                     user = ug;
                     break;
