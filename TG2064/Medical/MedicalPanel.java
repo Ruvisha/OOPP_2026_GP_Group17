@@ -110,11 +110,12 @@ public class MedicalPanel extends JPanel {
         topBar.add(title);
         topBar.add(btnRefresh);
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setResizeWeight(0.65);
-        splitPane.setDividerLocation(650);
+        // VERTICAL SPLIT: Form Card on top, Table Panel on bottom
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        splitPane.setResizeWeight(0.45); // Allocates proportion of vertical space
+        splitPane.setDividerLocation(310); // Initial pixel height for the top form section
 
-        // Table Panel
+        // Table Panel (Bottom)
         JPanel tablePanel = new JPanel(new BorderLayout());
         tablePanel.setBackground(Color.WHITE);
         tablePanel.setBorder(new LineBorder(ModernTheme.BORDER, 1));
@@ -138,10 +139,10 @@ public class MedicalPanel extends JPanel {
 
         tablePanel.add(new JScrollPane(medicalTable), BorderLayout.CENTER);
 
-        // Form Panel
+        // Form Panel (Top)
         JPanel formCard = ModernTheme.createCardPanel();
         formCard.setLayout(new BorderLayout());
-        formCard.setPreferredSize(new Dimension(360, 520));
+        formCard.setPreferredSize(new Dimension(0, 180));
 
         JLabel formHeader = new JLabel("Medical Record Details");
         formHeader.setFont(ModernTheme.FONT_SUBTITLE);
@@ -184,7 +185,7 @@ public class MedicalPanel extends JPanel {
         formCard.add(new JScrollPane(fields), BorderLayout.CENTER);
 
         // Action Buttons Row
-        JPanel btnPanel = new JPanel(new GridLayout(3, 2, 6, 6));
+        JPanel btnPanel = new JPanel(new GridLayout(1, 5, 6, 6)); // Adjusted layout grid for horizontal button alignment under form
         btnPanel.setOpaque(false);
         btnPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
 
@@ -201,8 +202,9 @@ public class MedicalPanel extends JPanel {
         btnPanel.add(btnClear);
         formCard.add(btnPanel, BorderLayout.SOUTH);
 
-        splitPane.setLeftComponent(tablePanel);
-        splitPane.setRightComponent(formCard);
+        // Assign top and bottom components to the vertical split pane
+        splitPane.setTopComponent(formCard);
+        splitPane.setBottomComponent(tablePanel);
 
         add(topBar, BorderLayout.NORTH);
         add(splitPane, BorderLayout.CENTER);
@@ -253,14 +255,14 @@ public class MedicalPanel extends JPanel {
         List<Medical> list = medicalService.getAllMedicals();
         for (Medical m : list) {
             tableModel.addRow(new Object[]{
-                m.getMedicalId(),
-                m.getStudentRegNo(),
-                m.getStudentName(),
-                m.getCourseCode(),
-                m.getSessionType(),
-                DateUtil.formatDate(m.getSessionDate()),
-                m.getStatus(),
-                m.getRemarks() != null ? m.getRemarks() : "-"
+                    m.getMedicalId(),
+                    m.getStudentRegNo(),
+                    m.getStudentName(),
+                    m.getCourseCode(),
+                    m.getSessionType(),
+                    DateUtil.formatDate(m.getSessionDate()),
+                    m.getStatus(),
+                    m.getRemarks() != null ? m.getRemarks() : "-"
             });
         }
     }
@@ -322,15 +324,15 @@ public class MedicalPanel extends JPanel {
             if (sDate == null || subDate == null) throw new ValidationException("Please enter valid dates in YYYY-MM-DD format.");
 
             Medical m = new Medical(
-                0,
-                stu.id,
-                crs.id,
-                (String) cmbSessionType.getSelectedItem(),
-                sDate,
-                subDate,
-                txtReason.getText().trim(),
-                txtDocPath.getText().trim(),
-                (String) cmbStatus.getSelectedItem()
+                    0,
+                    stu.id,
+                    crs.id,
+                    (String) cmbSessionType.getSelectedItem(),
+                    sDate,
+                    subDate,
+                    txtReason.getText().trim(),
+                    txtDocPath.getText().trim(),
+                    (String) cmbStatus.getSelectedItem()
             );
             m.setRemarks(txtRemarks.getText().trim());
 
@@ -377,11 +379,11 @@ public class MedicalPanel extends JPanel {
 
         int id = Integer.parseInt(txtMedicalId.getText());
         int confirm = JOptionPane.showConfirmDialog(
-            this,
-            "Are you sure you want to delete this medical record?",
-            "Confirm Delete",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.WARNING_MESSAGE
+                this,
+                "Are you sure you want to delete this medical record?",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
         );
 
         if (confirm == JOptionPane.YES_OPTION) {
