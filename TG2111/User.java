@@ -8,6 +8,7 @@ import java.sql.Timestamp;
  */
 public abstract class User {
     private int userId;
+    private String roleSpecificId;
     private String username;
     private String passwordHash;
     private int roleId;
@@ -50,6 +51,14 @@ public abstract class User {
     public abstract String getDashboardTitle();
 
     // Getters and Setters (Encapsulation)
+
+    public String getRoleSpecificId() {
+        return roleSpecificId;
+    }
+
+    public void setRoleSpecificId(String roleSpecificId) {
+        this.roleSpecificId = roleSpecificId;
+    }
 
     public int getUserId() {
         return userId;
