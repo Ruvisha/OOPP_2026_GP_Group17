@@ -56,10 +56,8 @@ public class UserDAO {
                 throw new DatabaseException("Unknown role id: " + roleId);
         }
 
-<<<<<<< HEAD
         user.setRoleSpecificId(rs.getString("role_specific_id"));
-=======
->>>>>>> origin/submain
+
         user.setProfilePic(profilePic != null ? profilePic : "default_avatar.png");
         user.setDepartmentName(departmentName);
         user.setCreatedAt(createdAt);
@@ -143,7 +141,6 @@ public class UserDAO {
         return list;
     }
 
-<<<<<<< HEAD
     public String getNextRoleSpecificId(int roleId) {
         String sql = "SELECT next_value FROM role_user_id_sequences WHERE role_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -241,65 +238,9 @@ public class UserDAO {
                 stmt.setNull(15, Types.VARCHAR);
                 stmt.setString(16, admin.getDesignation());
                 stmt.setNull(17, Types.VARCHAR);
+
                 stmt.setNull(18, Types.VARCHAR);
-=======
-    public boolean addUser(User user) {
-        String sql = "INSERT INTO users (username, password_hash, role_id, full_name, email, phone, " +
-                     "address, profile_pic, department_id, status, student_reg_no, academic_year, " +
-                     "current_semester, student_type, designation, office_room, assigned_lab) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getPasswordHash());
-            stmt.setInt(3, user.getRoleId());
-            stmt.setString(4, user.getFullName());
-            stmt.setString(5, user.getEmail());
-            stmt.setString(6, user.getPhone());
-            stmt.setString(7, user.getAddress());
-            stmt.setString(8, user.getProfilePic());
-            if (user.getDepartmentId() != null) {
-                stmt.setInt(9, user.getDepartmentId());
-            } else {
-                stmt.setNull(9, Types.INTEGER);
-            }
-            stmt.setString(10, user.getStatus() != null ? user.getStatus() : "ACTIVE");
-
-            if (user instanceof Undergraduate ug) {
-                stmt.setString(11, ug.getStudentRegNo());
-                stmt.setString(12, ug.getAcademicYear());
-                stmt.setInt(13, ug.getCurrentSemester());
-                stmt.setString(14, ug.getStudentType());
-                stmt.setNull(15, Types.VARCHAR);
-                stmt.setNull(16, Types.VARCHAR);
-                stmt.setNull(17, Types.VARCHAR);
-            } else if (user instanceof Lecturer lec) {
-                stmt.setNull(11, Types.VARCHAR);
-                stmt.setNull(12, Types.VARCHAR);
-                stmt.setNull(13, Types.INTEGER);
-                stmt.setNull(14, Types.VARCHAR);
-                stmt.setString(15, lec.getDesignation());
-                stmt.setString(16, lec.getOfficeRoom());
-                stmt.setNull(17, Types.VARCHAR);
-            } else if (user instanceof TechnicalOfficer to) {
-                stmt.setNull(11, Types.VARCHAR);
-                stmt.setNull(12, Types.VARCHAR);
-                stmt.setNull(13, Types.INTEGER);
-                stmt.setNull(14, Types.VARCHAR);
-                stmt.setString(15, to.getDesignation());
-                stmt.setNull(16, Types.VARCHAR);
-                stmt.setString(17, to.getAssignedLab());
-            } else if (user instanceof Admin admin) {
-                stmt.setNull(11, Types.VARCHAR);
-                stmt.setNull(12, Types.VARCHAR);
-                stmt.setNull(13, Types.INTEGER);
-                stmt.setNull(14, Types.VARCHAR);
-                stmt.setString(15, admin.getDesignation());
-                stmt.setNull(16, Types.VARCHAR);
-                stmt.setNull(17, Types.VARCHAR);
->>>>>>> origin/submain
             }
 
             int affected = stmt.executeUpdate();
@@ -309,15 +250,14 @@ public class UserDAO {
                         user.setUserId(generatedKeys.getInt(1));
                     }
                 }
-<<<<<<< HEAD
+                return true;
+            }
+
                 conn.commit();
                 return true;
             }
             }
-=======
-                return true;
-            }
->>>>>>> origin/submain
+
         } catch (SQLException e) {
             throw new DatabaseException("Failed to insert user: " + e.getMessage(), e);
         }

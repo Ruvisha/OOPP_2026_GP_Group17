@@ -114,11 +114,10 @@ public class LoginFrame extends JFrame {
 
         JPanel formCard = ModernTheme.createCardPanel();
         formCard.setLayout(new BoxLayout(formCard, BoxLayout.Y_AXIS));
-<<<<<<< HEAD
-        formCard.setPreferredSize(new Dimension(460, 430));
-=======
         formCard.setPreferredSize(new Dimension(460, 480));
->>>>>>> origin/submain
+
+        formCard.setPreferredSize(new Dimension(460, 430));
+
         formCard.setBorder(new CompoundBorder(new LineBorder(ModernTheme.BORDER, 1), new EmptyBorder(30, 35, 30, 35)));
 
         JLabel loginHeader = new JLabel("Portal Login");
@@ -183,8 +182,6 @@ public class LoginFrame extends JFrame {
         buttonRow.add(clearButton);
         buttonRow.add(exitButton);
 
-<<<<<<< HEAD
-=======
         // Quick Demo Accounts Fill Panel (helpful for examiners/reviewers)
         JLabel demoLabel = new JLabel("Quick Demo Credentials:");
         demoLabel.setFont(ModernTheme.FONT_SMALL);
@@ -201,7 +198,7 @@ public class LoginFrame extends JFrame {
         demoButtons.add(btnTO);
         demoButtons.add(btnStudent);
 
->>>>>>> origin/submain
+
         formCard.add(loginHeader);
         formCard.add(Box.createRigidArea(new Dimension(0, 4)));
         formCard.add(loginSub);
@@ -217,13 +214,11 @@ public class LoginFrame extends JFrame {
         formCard.add(loginButton);
         formCard.add(Box.createRigidArea(new Dimension(0, 10)));
         formCard.add(buttonRow);
-<<<<<<< HEAD
-=======
         formCard.add(Box.createRigidArea(new Dimension(0, 20)));
         formCard.add(demoLabel);
         formCard.add(Box.createRigidArea(new Dimension(0, 6)));
         formCard.add(demoButtons);
->>>>>>> origin/submain
+
 
         formContainer.add(formCard);
 
@@ -254,8 +249,6 @@ public class LoginFrame extends JFrame {
         passwordField.addKeyListener(enterListener);
     }
 
-<<<<<<< HEAD
-=======
     private JButton createQuickBtn(String title, String user, String pass) {
         JButton btn = new JButton(title);
         btn.setFont(new Font("Segoe UI", Font.PLAIN, 10));
@@ -271,7 +264,6 @@ public class LoginFrame extends JFrame {
         return btn;
     }
 
->>>>>>> origin/submain
     private void performLogin() {
         String username = usernameField.getText();
         String password = new String(passwordField.getPassword());
