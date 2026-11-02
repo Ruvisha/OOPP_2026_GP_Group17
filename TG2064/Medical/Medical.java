@@ -42,6 +42,15 @@ public class Medical {
         this.status = status;
     }
 
+    // Compatibility methods for file path handling
+    public String getFilePath() {
+        return medicalDocPath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.medicalDocPath = filePath;
+    }
+
     public int getMedicalId() {
         return medicalId;
     }

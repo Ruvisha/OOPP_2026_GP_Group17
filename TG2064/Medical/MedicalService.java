@@ -5,6 +5,10 @@ import com.fot.ams.exception.ValidationException;
 import com.fot.ams.model.Medical;
 import com.fot.ams.util.ValidationUtil;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 /**
@@ -31,6 +35,25 @@ public class MedicalService {
 
     public List<Medical> getMedicalsByCourse(int courseId) {
         return medicalDAO.getMedicalsByCourse(courseId);
+    }
+
+    public boolean submitMedicalReport(Medical medical, File pdfFile) {
+        try {
+            String uploadDir = "uploads/medical/";
+            File dir = new File(uploadDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            String destinationPath = uploadDir + System.currentTimeMillis() + "_" + pdfFile.getName();
+            Files.copy(pdfFile.toPath(), new File(destinationPath).toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+            medical.setFilePath(destinationPath);
+            return medicalDAO.insertMedical(medical);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean addMedical(Medical med) throws ValidationException {

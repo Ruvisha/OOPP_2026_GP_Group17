@@ -15,15 +15,15 @@ public class MedicalDAO {
 
     private Medical mapResultSetToMedical(ResultSet rs) throws SQLException {
         Medical med = new Medical(
-            rs.getInt("medical_id"),
-            rs.getInt("student_id"),
-            rs.getInt("course_id"),
-            rs.getString("session_type"),
-            rs.getDate("session_date"),
-            rs.getDate("submission_date"),
-            rs.getString("reason"),
-            rs.getString("medical_doc_path"),
-            rs.getString("status")
+                rs.getInt("medical_id"),
+                rs.getInt("student_id"),
+                rs.getInt("course_id"),
+                rs.getString("session_type"),
+                rs.getDate("session_date"),
+                rs.getDate("submission_date"),
+                rs.getString("reason"),
+                rs.getString("medical_doc_path"),
+                rs.getString("status")
         );
         med.setStudentRegNo(rs.getString("student_reg_no"));
         med.setStudentName(rs.getString("student_name"));
@@ -37,12 +37,12 @@ public class MedicalDAO {
     }
 
     private static final String BASE_SELECT =
-        "SELECT m.*, u.student_reg_no, u.full_name AS student_name, " +
-        "c.course_code, c.course_name, rev.full_name AS reviewer_name " +
-        "FROM medical m " +
-        "JOIN users u ON m.student_id = u.user_id " +
-        "JOIN courses c ON m.course_id = c.course_id " +
-        "LEFT JOIN users rev ON m.reviewed_by = rev.user_id ";
+            "SELECT m.*, u.student_reg_no, u.full_name AS student_name, " +
+                    "c.course_code, c.course_name, rev.full_name AS reviewer_name " +
+                    "FROM medical m " +
+                    "JOIN users u ON m.student_id = u.user_id " +
+                    "JOIN courses c ON m.course_id = c.course_id " +
+                    "LEFT JOIN users rev ON m.reviewed_by = rev.user_id ";
 
     public List<Medical> getAllMedicals() {
         List<Medical> list = new ArrayList<>();
@@ -59,6 +59,24 @@ public class MedicalDAO {
             throw new DatabaseException("Failed to fetch all medical records: " + e.getMessage(), e);
         }
         return list;
+    }
+
+    public boolean insertMedical(Medical medical) {
+        String query = "INSERT INTO medical (student_id, course_id, session_type, session_date, submission_date, reason, medical_doc_path, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, medical.getStudentId());
+            pstmt.setInt(2, medical.getCourseId());
+            pstmt.setString(3, medical.getSessionType());
+            pstmt.setDate(4, medical.getSessionDate());
+            pstmt.setDate(5, medical.getSubmissionDate());
+            pstmt.setString(6, medical.getReason());
+            pstmt.setString(7, medical.getMedicalDocPath());
+            pstmt.setString(8, medical.getStatus() != null ? medical.getStatus() : "PENDING");
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new DatabaseException("Failed to insert medical record: " + e.getMessage(), e);
+        }
     }
 
     public List<Medical> getMedicalsByStudent(int studentId) {
@@ -101,8 +119,8 @@ public class MedicalDAO {
 
     public boolean addMedical(Medical med) {
         String sql = "INSERT INTO medical (student_id, course_id, session_type, session_date, " +
-                     "submission_date, reason, medical_doc_path, status, remarks) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "submission_date, reason, medical_doc_path, status, remarks) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -134,7 +152,7 @@ public class MedicalDAO {
 
     public boolean updateMedicalStatus(int medicalId, String status, int reviewerId, String remarks) {
         String sql = "UPDATE medical SET status = ?, reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, remarks = ? " +
-                     "WHERE medical_id = ?";
+                "WHERE medical_id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
