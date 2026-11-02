@@ -41,18 +41,18 @@ public class TechnicalTimetablePanel extends JPanel {
     // Day column color themes (Color-coded headers and accents)
     private static final String[] WEEK_DAYS = {"MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"};
     private static final Color[] DAY_HEADER_COLORS = {
-            new Color(30, 58, 138),  // Monday: Deep Royal Blue
-            new Color(13, 148, 136), // Tuesday: Emerald Teal
-            new Color(217, 119, 6),  // Wednesday: Warm Amber
-            new Color(109, 40, 217), // Thursday: Violet / Purple
-            new Color(225, 29, 72)   // Friday: Rose / Crimson
+        new Color(30, 58, 138),  // Monday: Deep Royal Blue
+        new Color(13, 148, 136), // Tuesday: Emerald Teal
+        new Color(217, 119, 6),  // Wednesday: Warm Amber
+        new Color(109, 40, 217), // Thursday: Violet / Purple
+        new Color(225, 29, 72)   // Friday: Rose / Crimson
     };
     private static final Color[] DAY_ACCENT_COLORS = {
-            new Color(59, 130, 246), // Monday accent
-            new Color(20, 184, 166), // Tuesday accent
-            new Color(245, 158, 11), // Wednesday accent
-            new Color(139, 92, 246), // Thursday accent
-            new Color(244, 63, 94)   // Friday accent
+        new Color(59, 130, 246), // Monday accent
+        new Color(20, 184, 166), // Tuesday accent
+        new Color(245, 158, 11), // Wednesday accent
+        new Color(139, 92, 246), // Thursday accent
+        new Color(244, 63, 94)   // Friday accent
     };
 
     private static class DeptItem {
@@ -86,8 +86,8 @@ public class TechnicalTimetablePanel extends JPanel {
         JPanel topBar = new JPanel(new BorderLayout(10, 10));
         topBar.setBackground(Color.WHITE);
         topBar.setBorder(new CompoundBorder(
-                new LineBorder(ModernTheme.BORDER, 1),
-                new EmptyBorder(10, 16, 10, 16)
+            new LineBorder(ModernTheme.BORDER, 1),
+            new EmptyBorder(10, 16, 10, 16)
         ));
 
         // Left: Department Selector and Session count label
@@ -213,13 +213,13 @@ public class TechnicalTimetablePanel extends JPanel {
         for (Timetable t : list) {
             String timeSlot = DateUtil.formatTime(t.getStartTime()) + " - " + DateUtil.formatTime(t.getEndTime());
             tableModel.addRow(new Object[]{
-                    t.getDayOfWeek(),
-                    timeSlot,
-                    t.getCourseCode(),
-                    t.getCourseName(),
-                    t.getSessionType(),
-                    t.getRoom(),
-                    t.getLecturerName() != null ? t.getLecturerName() : "TBA"
+                t.getDayOfWeek(),
+                timeSlot,
+                t.getCourseCode(),
+                t.getCourseName(),
+                t.getSessionType(),
+                t.getRoom(),
+                t.getLecturerName() != null ? t.getLecturerName() : "TBA"
             });
         }
 
@@ -237,16 +237,19 @@ public class TechnicalTimetablePanel extends JPanel {
     private void buildWeeklyTimetableGrid(List<Timetable> list) {
         gridContainer.removeAll();
 
-        // Define all 5 weekdays explicitly to ensure none are hidden
-        String[] activeDays = {"MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"};
+        // Check if there are Saturday sessions
+        boolean hasSaturday = list.stream().anyMatch(t -> "SATURDAY".equalsIgnoreCase(t.getDayOfWeek()));
+        int numDays = hasSaturday ? 6 : 5;
 
-        // Use GridLayout with 5 columns so all weekdays fit side-by-side on screen
-        gridContainer.setLayout(new GridLayout(1, 5, 8, 0));
+        gridContainer.setLayout(new GridLayout(1, numDays, 12, 0));
 
         // Group timetable items by day of the week
         Map<String, List<Timetable>> dayMap = new LinkedHashMap<>();
-        for (String day : activeDays) {
+        for (String day : WEEK_DAYS) {
             dayMap.put(day, new ArrayList<>());
+        }
+        if (hasSaturday) {
+            dayMap.put("SATURDAY", new ArrayList<>());
         }
 
         for (Timetable t : list) {
@@ -256,15 +259,15 @@ public class TechnicalTimetablePanel extends JPanel {
             }
         }
 
-        // Sort items in each day chronologically by start time (fixed with Long.compare)
+        // Sort items in each day chronologically by start time
         for (List<Timetable> daySlots : dayMap.values()) {
             daySlots.sort((a, b) -> {
                 if (a.getStartTime() == null || b.getStartTime() == null) return 0;
-                return Long.compare(a.getStartTime().getTime(), b.getStartTime().getTime());
+                return a.getStartTime().compareTo(b.getStartTime());
             });
         }
 
-        // Build and add each day column to the grid
+        // Build each day column
         int index = 0;
         for (Map.Entry<String, List<Timetable>> entry : dayMap.entrySet()) {
             String dayName = entry.getKey();
@@ -303,8 +306,8 @@ public class TechnicalTimetablePanel extends JPanel {
         badge.setOpaque(true);
         badge.setBackground(Color.WHITE);
         badge.setBorder(new CompoundBorder(
-                new LineBorder(headerColor, 1, true),
-                new EmptyBorder(2, 6, 2, 6)
+            new LineBorder(headerColor, 1, true),
+            new EmptyBorder(2, 6, 2, 6)
         ));
 
         header.add(lblDay, BorderLayout.WEST);
@@ -321,8 +324,8 @@ public class TechnicalTimetablePanel extends JPanel {
             JPanel emptyCard = new JPanel(new BorderLayout());
             emptyCard.setBackground(Color.WHITE);
             emptyCard.setBorder(new CompoundBorder(
-                    new LineBorder(ModernTheme.BORDER, 1, true),
-                    new EmptyBorder(30, 10, 30, 10)
+                new LineBorder(ModernTheme.BORDER, 1, true),
+                new EmptyBorder(30, 10, 30, 10)
             ));
             emptyCard.setMaximumSize(new Dimension(Short.MAX_VALUE, 90));
 
@@ -333,10 +336,9 @@ public class TechnicalTimetablePanel extends JPanel {
 
             cardsPanel.add(emptyCard);
         } else {
-            // Find this loop inside createDayColumn
             for (int i = 0; i < slots.size(); i++) {
                 if (i > 0) {
-                    cardsPanel.add(Box.createRigidArea(new Dimension(0, 6))); // Reduced spacing
+                    cardsPanel.add(Box.createRigidArea(new Dimension(0, 10)));
                 }
                 cardsPanel.add(createSlotCard(slots.get(i), accentColor));
             }
@@ -359,13 +361,13 @@ public class TechnicalTimetablePanel extends JPanel {
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(Color.WHITE);
         card.setBorder(new CompoundBorder(
-                BorderFactory.createMatteBorder(0, 3, 0, 0, accentColor),
-                new CompoundBorder(
-                        new LineBorder(new Color(226, 232, 240), 1),
-                        new EmptyBorder(6, 8, 6, 8) // Reduced padding for compact view
-                )
+            BorderFactory.createMatteBorder(0, 4, 0, 0, accentColor),
+            new CompoundBorder(
+                new LineBorder(ModernTheme.BORDER, 1),
+                new EmptyBorder(10, 10, 10, 10)
+            )
         ));
-        card.setMaximumSize(new Dimension(Short.MAX_VALUE, 115)); // Minimized height
+        card.setMaximumSize(new Dimension(Short.MAX_VALUE, 165));
 
         // Time slot & Session Type Badge Row
         JPanel topRow = new JPanel(new BorderLayout(5, 0));
@@ -373,50 +375,70 @@ public class TechnicalTimetablePanel extends JPanel {
 
         String timeStr = DateUtil.formatTime(t.getStartTime()) + " - " + DateUtil.formatTime(t.getEndTime());
         JLabel timeLbl = new JLabel(timeStr);
-        timeLbl.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        timeLbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
         timeLbl.setForeground(ModernTheme.PRIMARY_DARK);
 
         String sessionType = t.getSessionType() != null ? t.getSessionType() : "THEORY";
         boolean isPractical = "PRACTICAL".equalsIgnoreCase(sessionType);
 
         JLabel typeBadge = new JLabel(sessionType);
-        typeBadge.setFont(new Font("Segoe UI", Font.BOLD, 9));
+        typeBadge.setFont(new Font("Segoe UI", Font.BOLD, 10));
         typeBadge.setOpaque(true);
         if (isPractical) {
             typeBadge.setBackground(new Color(236, 253, 245));
             typeBadge.setForeground(new Color(6, 95, 70));
+            typeBadge.setBorder(new CompoundBorder(
+                new LineBorder(new Color(167, 243, 208), 1, true),
+                new EmptyBorder(2, 5, 2, 5)
+            ));
         } else {
             typeBadge.setBackground(new Color(238, 242, 255));
             typeBadge.setForeground(new Color(49, 46, 129));
+            typeBadge.setBorder(new CompoundBorder(
+                new LineBorder(new Color(199, 210, 254), 1, true),
+                new EmptyBorder(2, 5, 2, 5)
+            ));
         }
-        typeBadge.setBorder(new EmptyBorder(1, 4, 1, 4));
 
         topRow.add(timeLbl, BorderLayout.WEST);
         topRow.add(typeBadge, BorderLayout.EAST);
         card.add(topRow);
-        card.add(Box.createRigidArea(new Dimension(0, 3)));
+        card.add(Box.createRigidArea(new Dimension(0, 6)));
 
         // Course Code
         JLabel codeLbl = new JLabel(t.getCourseCode() != null ? t.getCourseCode() : "N/A");
-        codeLbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        codeLbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
         codeLbl.setForeground(ModernTheme.PRIMARY);
         card.add(codeLbl);
-        card.add(Box.createRigidArea(new Dimension(0, 1)));
+        card.add(Box.createRigidArea(new Dimension(0, 2)));
 
-        // Course Title (Truncated if too long)
-        String courseName = t.getCourseName() != null ? t.getCourseName() : "";
-        JLabel nameLbl = new JLabel(courseName);
-        nameLbl.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        // Course Title
+        JLabel nameLbl = new JLabel(t.getCourseName() != null ? t.getCourseName() : "");
+        nameLbl.setFont(ModernTheme.FONT_REGULAR);
         nameLbl.setForeground(ModernTheme.TEXT_DARK);
         card.add(nameLbl);
-        card.add(Box.createRigidArea(new Dimension(0, 4)));
+        card.add(Box.createRigidArea(new Dimension(0, 8)));
+
+        // Divider line
+        JSeparator sep = new JSeparator();
+        sep.setForeground(ModernTheme.BORDER);
+        sep.setMaximumSize(new Dimension(Short.MAX_VALUE, 1));
+        card.add(sep);
+        card.add(Box.createRigidArea(new Dimension(0, 6)));
 
         // Hall / Lab Location
-        String locationPrefix = isPractical ? "🧪 " : "🏛 ";
+        String locationPrefix = isPractical ? "🧪 Lab: " : "🏛 Hall: ";
         JLabel roomLbl = new JLabel(locationPrefix + (t.getRoom() != null ? t.getRoom() : "TBA"));
-        roomLbl.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        roomLbl.setForeground(ModernTheme.TEXT_MUTED);
+        roomLbl.setFont(ModernTheme.FONT_SMALL);
+        roomLbl.setForeground(ModernTheme.TEXT_DARK);
         card.add(roomLbl);
+        card.add(Box.createRigidArea(new Dimension(0, 3)));
+
+        // Lecturer in Charge
+        JLabel lecLbl = new JLabel("👤 " + (t.getLecturerName() != null ? t.getLecturerName() : "TBA"));
+        lecLbl.setFont(ModernTheme.FONT_SMALL);
+        lecLbl.setForeground(ModernTheme.TEXT_MUTED);
+        card.add(lecLbl);
 
         return card;
     }
