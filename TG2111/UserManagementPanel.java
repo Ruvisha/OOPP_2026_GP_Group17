@@ -294,12 +294,11 @@ public class UserManagementPanel extends JPanel {
         return cleanToken(fullName.split("\\s+")[0]);
     }
 
-    private String generatedEmailBase() {
-        String[] parts = txtFullName.getText().trim().toLowerCase().split("\\s+");
-        if (parts.length == 0 || parts[0].isBlank()) return "";
-        String first = cleanToken(parts[0]);
-        String last = parts.length > 1 ? cleanToken(parts[parts.length - 1]) : first;
-        return first + "." + last + "@fot.ruh.ac.lk";
+    private String generatedEmailBase(int roleId) {
+        String first = firstNameToken().replaceAll("\\.", "");
+        if (first.isBlank()) return "";
+        String roleSpecificId = new UserDAO().getNextRoleSpecificId(roleId);
+        return first + "." + roleSpecificId + "@fot.ruh.ac.lk";
     }
 
     private String uniqueUsername(String base) {
@@ -312,35 +311,14 @@ public class UserManagementPanel extends JPanel {
         return candidate;
     }
 
-    private String uniqueEmail(String base) {
-        UserDAO dao = new UserDAO();
-        String candidate = base;
-        int suffix = 1;
-        while (dao.isEmailTaken(candidate, 0)) {
-            int at = base.lastIndexOf('@');
-            candidate = (at > 0 ? base.substring(0, at) : base) + suffix++ + "@fot.ruh.ac.lk";
-        }
-        return candidate;
-    }
 
     private String nextStudentRegNo(String academicYear) {
         String year = academicYear == null ? "" : academicYear.trim();
         java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(20\\d{2})").matcher(year);
         if (!matcher.find()) return "";
         year = matcher.group(1);
-        int next = 2111;
-        for (User u : userService.getUsersByRole(4)) {
-            if (u instanceof Undergraduate ug && ug.getStudentRegNo() != null) {
-                java.util.regex.Matcher reg = java.util.regex.Pattern
-                        .compile("(?i)^TG/" + year + "/(\\d+)$")
-                        .matcher(ug.getStudentRegNo().trim());
-                if (reg.matches()) {
-                    try { next = Math.max(next, Integer.parseInt(reg.group(1)) + 1); }
-                    catch (NumberFormatException ignored) { }
-                }
-            }
-        }
-        return "TG/" + year + "/" + next;
+        // Undergraduate registration number is the role-specific ID (0001, 0002, ...).
+        return new UserDAO().getNextRoleSpecificId(4);
     }
 
     private void refreshGeneratedIdentity() {
@@ -353,17 +331,21 @@ public class UserManagementPanel extends JPanel {
         String baseUsername;
         if (roleId == 2) baseUsername = "lec_" + first;
         else if (roleId == 3) baseUsername = "to_" + first;
-        else if (roleId == 4) baseUsername = nextStudentRegNo(txtAcademicYear.getText());
-        else baseUsername = "admin_" + first;
+        else if (roleId == 4) {
+            String academicYear = txtAcademicYear.getText().trim();
+            String registrationId = nextStudentRegNo(academicYear);
+            baseUsername = academicYear.matches("20\\d{2}") && !registrationId.isBlank()
+                    ? "TG/" + academicYear + "/" + registrationId : "";
+        } else baseUsername = "admin_" + first;
 
         try {
             if (roleId == 4) {
-                txtRegNo.setText(baseUsername);
+                txtRegNo.setText(nextStudentRegNo(txtAcademicYear.getText()));
             }
             if (!baseUsername.isBlank()) {
                 txtUsername.setText(uniqueUsername(baseUsername));
-                String email = generatedEmailBase();
-                if (!email.isBlank()) txtEmail.setText(uniqueEmail(email));
+                String email = generatedEmailBase(roleId);
+                if (!email.isBlank()) txtEmail.setText(email);
             }
         } catch (Exception ex) {
             // Keep the form usable if the database is temporarily unavailable.

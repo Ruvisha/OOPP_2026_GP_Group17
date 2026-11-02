@@ -140,6 +140,20 @@ public class UserDAO {
         return list;
     }
 
+    public String getNextRoleSpecificId(int roleId) {
+        String sql = "SELECT next_value FROM role_user_id_sequences WHERE role_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, roleId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return String.format("%04d", rs.getInt(1));
+            }
+            throw new SQLException("Missing role ID sequence for role " + roleId);
+        } catch (SQLException e) {
+            throw new DatabaseException("Failed to get next role-specific ID: " + e.getMessage(), e);
+        }
+    }
+
     private String allocateRoleSpecificId(Connection conn, int roleId) throws SQLException {
         int next;
         try (PreparedStatement stmt = conn.prepareStatement(
@@ -170,12 +184,16 @@ public class UserDAO {
             String roleSpecificId = allocateRoleSpecificId(conn, user.getRoleId());
             try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             user.setRoleSpecificId(roleSpecificId);
+            String firstName = user.getFullName() == null ? "" : user.getFullName().trim().split("\\s+")[0];
+            firstName = firstName.toLowerCase().replaceAll("[^a-z0-9]+", "");
+            String generatedEmail = firstName + "." + roleSpecificId + "@fot.ruh.ac.lk";
+            user.setEmail(generatedEmail);
             stmt.setString(1, roleSpecificId);
             stmt.setString(2, user.getUsername());
             stmt.setString(3, user.getPasswordHash());
             stmt.setInt(4, user.getRoleId());
             stmt.setString(5, user.getFullName());
-            stmt.setString(6, user.getEmail());
+            stmt.setString(6, generatedEmail);
             stmt.setString(7, user.getPhone());
             stmt.setString(8, user.getAddress());
             stmt.setString(9, user.getProfilePic());
@@ -187,7 +205,9 @@ public class UserDAO {
             stmt.setString(11, user.getStatus() != null ? user.getStatus() : "ACTIVE");
 
             if (user instanceof Undergraduate ug) {
-                stmt.setString(12, ug.getStudentRegNo());
+                // Keep student registration number equal to the undergraduate role-specific ID.
+                ug.setStudentRegNo(roleSpecificId);
+                stmt.setString(12, roleSpecificId);
                 stmt.setString(13, ug.getAcademicYear());
                 stmt.setInt(14, ug.getCurrentSemester());
                 stmt.setString(15, ug.getStudentType());
