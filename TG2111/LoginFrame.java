@@ -114,7 +114,11 @@ public class LoginFrame extends JFrame {
 
         JPanel formCard = ModernTheme.createCardPanel();
         formCard.setLayout(new BoxLayout(formCard, BoxLayout.Y_AXIS));
+<<<<<<< HEAD
         formCard.setPreferredSize(new Dimension(460, 430));
+=======
+        formCard.setPreferredSize(new Dimension(460, 480));
+>>>>>>> origin/submain
         formCard.setBorder(new CompoundBorder(new LineBorder(ModernTheme.BORDER, 1), new EmptyBorder(30, 35, 30, 35)));
 
         JLabel loginHeader = new JLabel("Portal Login");
@@ -179,6 +183,25 @@ public class LoginFrame extends JFrame {
         buttonRow.add(clearButton);
         buttonRow.add(exitButton);
 
+<<<<<<< HEAD
+=======
+        // Quick Demo Accounts Fill Panel (helpful for examiners/reviewers)
+        JLabel demoLabel = new JLabel("Quick Demo Credentials:");
+        demoLabel.setFont(ModernTheme.FONT_SMALL);
+        demoLabel.setForeground(ModernTheme.TEXT_MUTED);
+
+        JPanel demoButtons = new JPanel(new GridLayout(1, 4, 6, 0));
+        demoButtons.setOpaque(false);
+        JButton btnAdmin = createQuickBtn("Admin", "admin", "admin123");
+        JButton btnLec = createQuickBtn("Lecturer", "lec_kamal", "lec123");
+        JButton btnTO = createQuickBtn("Tech Officer", "to_saman", "to123");
+        JButton btnStudent = createQuickBtn("Student", "tg20242001", "student123");
+        demoButtons.add(btnAdmin);
+        demoButtons.add(btnLec);
+        demoButtons.add(btnTO);
+        demoButtons.add(btnStudent);
+
+>>>>>>> origin/submain
         formCard.add(loginHeader);
         formCard.add(Box.createRigidArea(new Dimension(0, 4)));
         formCard.add(loginSub);
@@ -194,6 +217,13 @@ public class LoginFrame extends JFrame {
         formCard.add(loginButton);
         formCard.add(Box.createRigidArea(new Dimension(0, 10)));
         formCard.add(buttonRow);
+<<<<<<< HEAD
+=======
+        formCard.add(Box.createRigidArea(new Dimension(0, 20)));
+        formCard.add(demoLabel);
+        formCard.add(Box.createRigidArea(new Dimension(0, 6)));
+        formCard.add(demoButtons);
+>>>>>>> origin/submain
 
         formContainer.add(formCard);
 
@@ -224,6 +254,24 @@ public class LoginFrame extends JFrame {
         passwordField.addKeyListener(enterListener);
     }
 
+<<<<<<< HEAD
+=======
+    private JButton createQuickBtn(String title, String user, String pass) {
+        JButton btn = new JButton(title);
+        btn.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        btn.setBackground(new Color(241, 245, 249));
+        btn.setForeground(ModernTheme.TEXT_DARK);
+        btn.setFocusPainted(false);
+        btn.setBorder(new LineBorder(ModernTheme.BORDER, 1));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.addActionListener(e -> {
+            usernameField.setText(user);
+            passwordField.setText(pass);
+        });
+        return btn;
+    }
+
+>>>>>>> origin/submain
     private void performLogin() {
         String username = usernameField.getText();
         String password = new String(passwordField.getPassword());
