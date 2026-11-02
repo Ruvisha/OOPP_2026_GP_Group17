@@ -193,14 +193,40 @@ public class CourseMaterialPanel extends JPanel {
         splitPane.setLeftComponent(tablePanel);
         splitPane.setRightComponent(formCard);
 
-        add(topBar, BorderLayout.NORTH);
-        add(splitPane, BorderLayout.CENTER);
+        JPanel materialTab = new JPanel(new BorderLayout(15, 15));
+        materialTab.setBackground(ModernTheme.BG_MAIN);
+        materialTab.add(topBar, BorderLayout.NORTH);
+        materialTab.add(splitPane, BorderLayout.CENTER);
+
+        quizPanel = new QuizManagementPanel();
+        assignmentPanel = new AssignmentManagementPanel();
+
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(ModernTheme.FONT_BOLD);
+        tabbedPane.setBackground(Color.WHITE);
+        tabbedPane.addTab("Course Study Materials", materialTab);
+        tabbedPane.addTab("Online Quizzes", quizPanel);
+        tabbedPane.addTab("Course Assignments", assignmentPanel);
+
+        tabbedPane.addChangeListener(e -> {
+            int idx = tabbedPane.getSelectedIndex();
+            if (idx == 1 && quizPanel != null) {
+                quizPanel.loadCourses();
+            } else if (idx == 2 && assignmentPanel != null) {
+                assignmentPanel.loadCourses();
+            }
+        });
+
+        add(tabbedPane, BorderLayout.CENTER);
 
         btnAdd.addActionListener(e -> handleAdd());
         btnUpdate.addActionListener(e -> handleUpdate());
         btnDelete.addActionListener(e -> handleDelete());
         btnClear.addActionListener(e -> clearForm());
     }
+
+    private QuizManagementPanel quizPanel;
+    private AssignmentManagementPanel assignmentPanel;
 
     private JPanel createRow(String labelText, JComponent comp) {
         JPanel p = new JPanel(new BorderLayout(5, 2));

@@ -112,6 +112,9 @@ public class CourseService {
     public boolean enrollStudent(int studentId, int courseId, String academicYear, int semester, boolean isRepeat) throws ValidationException {
         if (studentId <= 0 || courseId <= 0) throw new ValidationException("Select a valid student and course.");
         ValidationUtil.validateNotEmpty(academicYear, "Academic Year");
+        if (!academicYear.matches("^\\d{4}$")) {
+            throw new ValidationException("Academic year must be in simple 4-digit YYYY format (e.g. 2026).");
+        }
         if (semester < 1 || semester > 2) throw new ValidationException("Semester must be 1 or 2.");
         if (enrollmentDAO.isStudentEnrolled(studentId, courseId, academicYear.trim(), semester))
             throw new ValidationException("This student is already enrolled in this course for the selected academic year and semester.");
@@ -119,4 +122,19 @@ public class CourseService {
     }
 
     public boolean cancelEnrollment(int enrollmentId) { return enrollmentDAO.deleteEnrollment(enrollmentId); }
+
+    public List<String> getAvailableAcademicYears() {
+        return enrollmentDAO.getAvailableAcademicYears();
+    }
+
+    public String getActiveAcademicYear() {
+        return enrollmentDAO.getActiveAcademicYear();
+    }
+
+    public boolean addAcademicYear(String year, boolean isActive) throws ValidationException {
+        if (year == null || !year.matches("^\\d{4}$")) {
+            throw new ValidationException("Academic year must be in simple 4-digit YYYY format (e.g. 2026).");
+        }
+        return enrollmentDAO.addAcademicYear(year, isActive);
+    }
 }

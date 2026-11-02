@@ -69,7 +69,6 @@ public class CourseViewPanel extends JPanel {
 
         topBar.add(title, BorderLayout.WEST);
         topBar.add(headerActions, BorderLayout.EAST);
-        add(topBar, BorderLayout.NORTH);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         splitPane.setResizeWeight(0.50);
@@ -137,8 +136,35 @@ public class CourseViewPanel extends JPanel {
         splitPane.setLeftComponent(leftPanel);
         splitPane.setRightComponent(rightPanel);
 
-        add(splitPane, BorderLayout.CENTER);
+        JPanel coursesTab = new JPanel(new BorderLayout(15, 15));
+        coursesTab.setBackground(ModernTheme.BG_MAIN);
+        coursesTab.add(topBar, BorderLayout.NORTH);
+        coursesTab.add(splitPane, BorderLayout.CENTER);
+
+        quizTakingPanel = new QuizTakingPanel();
+        assignmentSubmissionPanel = new AssignmentSubmissionPanel();
+
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(ModernTheme.FONT_BOLD);
+        tabbedPane.setBackground(Color.WHITE);
+        tabbedPane.addTab("Enrolled Courses & Materials", coursesTab);
+        tabbedPane.addTab("My Quizzes", quizTakingPanel);
+        tabbedPane.addTab("My Assignments", assignmentSubmissionPanel);
+
+        tabbedPane.addChangeListener(e -> {
+            int idx = tabbedPane.getSelectedIndex();
+            if (idx == 1 && quizTakingPanel != null) {
+                quizTakingPanel.loadEnrolledCourses();
+            } else if (idx == 2 && assignmentSubmissionPanel != null) {
+                assignmentSubmissionPanel.loadEnrolledCourses();
+            }
+        });
+
+        add(tabbedPane, BorderLayout.CENTER);
     }
+
+    private QuizTakingPanel quizTakingPanel;
+    private AssignmentSubmissionPanel assignmentSubmissionPanel;
 
 
     private void showEnrollmentDialog() {
@@ -154,20 +180,34 @@ public class CourseViewPanel extends JPanel {
         }
         JComboBox<Course> cmbCourse = new JComboBox<>();
         for (Course course : allCourses) cmbCourse.addItem(course);
-        JTextField txtAcademicYear = new JTextField(10);
+
+        JComboBox<String> cmbAcademicYear = new JComboBox<>();
+        List<String> years = enrollmentDAO.getAvailableAcademicYears();
+        for (String yr : years) cmbAcademicYear.addItem(yr);
+        String activeYear = enrollmentDAO.getActiveAcademicYear();
+        if (activeYear != null) cmbAcademicYear.setSelectedItem(activeYear);
+
         JCheckBox chkRepeat = new JCheckBox("Repeat course");
         JPanel form = new JPanel(new GridLayout(0, 2, 8, 8));
         form.add(new JLabel("Course:")); form.add(cmbCourse);
-        form.add(new JLabel("Academic Year (e.g. 2026/2027):")); form.add(txtAcademicYear);
+        form.add(new JLabel("Academic Year:")); form.add(cmbAcademicYear);
         form.add(new JLabel("Registration type:")); form.add(chkRepeat);
+
         int result = JOptionPane.showConfirmDialog(this, form, "Student Course Enrollment", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         if (result != JOptionPane.OK_OPTION) return;
+
         Course selected = (Course) cmbCourse.getSelectedItem();
-        String academicYear = txtAcademicYear.getText().trim();
-        if (selected == null || academicYear.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Select a course and enter the academic year.", "Validation", JOptionPane.WARNING_MESSAGE);
+        String academicYear = (String) cmbAcademicYear.getSelectedItem();
+        if (selected == null || academicYear == null || academicYear.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Select a course and academic year.", "Validation", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
+        if (!academicYear.matches("^\\d{4}$")) {
+            JOptionPane.showMessageDialog(this, "Academic year must be in simple 4-digit YYYY format (e.g. 2026).", "Validation", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         try {
             if (enrollmentDAO.isStudentEnrolled(current.getUserId(), selected.getCourseId(), academicYear, selected.getSemester())) {
                 JOptionPane.showMessageDialog(this, "You are already enrolled in this course for that academic year and semester.", "Already Enrolled", JOptionPane.WARNING_MESSAGE);
@@ -208,6 +248,9 @@ public class CourseViewPanel extends JPanel {
             courseTable.setRowSelectionInterval(0, 0);
             loadMaterialsForSelectedCourse();
         }
+
+        if (quizTakingPanel != null) quizTakingPanel.loadStudentQuizzes();
+        if (assignmentSubmissionPanel != null) assignmentSubmissionPanel.loadStudentAssignments();
     }
 
 
