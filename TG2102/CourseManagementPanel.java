@@ -48,6 +48,10 @@ public class CourseManagementPanel extends JPanel {
     private JButton btnDelete;
     private JButton btnClear;
 
+    private JLabel lblCourseCount;
+    private JButton btnFilter;
+    private JButton btnResetFilter;
+
     public CourseManagementPanel() {
         this.courseService = new CourseService();
         this.departmentDAO = new DepartmentDAO();
@@ -77,22 +81,41 @@ public class CourseManagementPanel extends JPanel {
         setBorder(new EmptyBorder(15, 15, 15, 15));
 
         // Top Header
-        JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel topBar = new JPanel(new BorderLayout());
         topBar.setBackground(Color.WHITE);
-        topBar.setBorder(new LineBorder(ModernTheme.BORDER, 1));
+        topBar.setBorder(new CompoundBorder(
+            new LineBorder(ModernTheme.BORDER, 1),
+            new EmptyBorder(12, 16, 12, 16)
+        ));
+
+        JPanel titleBlock = new JPanel(new GridLayout(2, 1, 0, 2));
+        titleBlock.setOpaque(false);
+
         JLabel title = new JLabel("Academic Course Curriculum Management");
-        title.setFont(ModernTheme.FONT_SUBTITLE);
+        title.setFont(ModernTheme.FONT_TITLE);
         title.setForeground(ModernTheme.PRIMARY);
-        topBar.add(title);
 
+        JLabel subtitle = new JLabel("Faculty of Technology • University of Ruhuna | Manage curriculum modules, credits, and lecturer allocations");
+        subtitle.setFont(ModernTheme.FONT_SMALL);
+        subtitle.setForeground(ModernTheme.TEXT_MUTED);
+
+        titleBlock.add(title);
+        titleBlock.add(subtitle);
+        topBar.add(titleBlock, BorderLayout.WEST);
+
+        // Center Split Pane (Left: Course Table, Right: Course Specification Form)
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setResizeWeight(0.65);
-        splitPane.setDividerLocation(650);
+        splitPane.setResizeWeight(0.62);
+        splitPane.setDividerLocation(660);
+        splitPane.setContinuousLayout(true);
+        splitPane.setBorder(null);
+        splitPane.setDividerSize(6);
 
-        // Table Panel
+        // Left Table Panel
         JPanel tablePanel = new JPanel(new BorderLayout());
         tablePanel.setBackground(Color.WHITE);
         tablePanel.setBorder(new LineBorder(ModernTheme.BORDER, 1));
+        tablePanel.setMinimumSize(new Dimension(460, 400));
 
         String[] cols = {"ID", "Course Code", "Course Name", "Credits", "Year", "Sem", "Department", "Theory", "Practical"};
         tableModel = new DefaultTableModel(cols, 0) {
@@ -105,43 +128,128 @@ public class CourseManagementPanel extends JPanel {
         courseTable = new JTable(tableModel);
         ModernTheme.styleTable(courseTable);
         courseTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        courseTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
         courseTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting() && courseTable.getSelectedRow() != -1) {
                 populateForm();
             }
         });
 
-        JPanel filterBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
-        filterBar.setBackground(Color.WHITE);
+        // Filter and Toolbar Section
+        JPanel filterAndToolbarPanel = new JPanel();
+        filterAndToolbarPanel.setLayout(new BoxLayout(filterAndToolbarPanel, BoxLayout.Y_AXIS));
+        filterAndToolbarPanel.setBackground(Color.WHITE);
+        filterAndToolbarPanel.setBorder(new CompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, ModernTheme.BORDER),
+            new EmptyBorder(10, 12, 10, 12)
+        ));
+
+        // Row 1: Dropdown Filters
+        JPanel filterRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 4));
+        filterRow.setOpaque(false);
+
+        JLabel lblDept = new JLabel("Department:");
+        lblDept.setFont(ModernTheme.FONT_BOLD);
+        lblDept.setForeground(ModernTheme.TEXT_DARK);
+
         cmbDepartmentFilter = new JComboBox<>();
         cmbDepartmentFilter.addItem(new FilterItem(0, "All Departments"));
-        cmbYearFilter = new JComboBox<>(new String[]{"All Years", "Year 1", "Year 2", "Year 3", "Year 4"});
-        cmbSemesterFilter = new JComboBox<>(new String[]{"All Semesters", "Semester 1", "Semester 2"});
-        filterBar.add(new JLabel("Department:")); filterBar.add(cmbDepartmentFilter);
-        filterBar.add(new JLabel("Year:")); filterBar.add(cmbYearFilter);
-        filterBar.add(new JLabel("Semester:")); filterBar.add(cmbSemesterFilter);
-        JButton btnFilter = ModernTheme.createSecondaryButton("Apply Filter");
-        JButton btnResetFilter = ModernTheme.createSecondaryButton("Reset");
-        filterBar.add(btnFilter); filterBar.add(btnResetFilter);
-        btnFilter.addActionListener(e -> loadCourses());
-        btnResetFilter.addActionListener(e -> { cmbDepartmentFilter.setSelectedIndex(0); cmbYearFilter.setSelectedIndex(0); cmbSemesterFilter.setSelectedIndex(0); loadCourses(); });
-        tablePanel.add(filterBar, BorderLayout.NORTH);
-        tablePanel.add(new JScrollPane(courseTable), BorderLayout.CENTER);
+        cmbDepartmentFilter.setFont(ModernTheme.FONT_REGULAR);
+        cmbDepartmentFilter.setPreferredSize(new Dimension(230, 30));
+        cmbDepartmentFilter.setBackground(Color.WHITE);
 
-        // Form Panel
+        JLabel lblYear = new JLabel("Year:");
+        lblYear.setFont(ModernTheme.FONT_BOLD);
+        lblYear.setForeground(ModernTheme.TEXT_DARK);
+
+        cmbYearFilter = new JComboBox<>(new String[]{"All Years", "Year 1", "Year 2", "Year 3", "Year 4"});
+        cmbYearFilter.setFont(ModernTheme.FONT_REGULAR);
+        cmbYearFilter.setPreferredSize(new Dimension(110, 30));
+        cmbYearFilter.setBackground(Color.WHITE);
+
+        JLabel lblSem = new JLabel("Semester:");
+        lblSem.setFont(ModernTheme.FONT_BOLD);
+        lblSem.setForeground(ModernTheme.TEXT_DARK);
+
+        cmbSemesterFilter = new JComboBox<>(new String[]{"All Semesters", "Semester 1", "Semester 2"});
+        cmbSemesterFilter.setFont(ModernTheme.FONT_REGULAR);
+        cmbSemesterFilter.setPreferredSize(new Dimension(125, 30));
+        cmbSemesterFilter.setBackground(Color.WHITE);
+
+        filterRow.add(lblDept);
+        filterRow.add(cmbDepartmentFilter);
+        filterRow.add(Box.createHorizontalStrut(5));
+        filterRow.add(lblYear);
+        filterRow.add(cmbYearFilter);
+        filterRow.add(Box.createHorizontalStrut(5));
+        filterRow.add(lblSem);
+        filterRow.add(cmbSemesterFilter);
+
+        // Row 2: Action Toolbar below Filters (prevents overlapping and clipping)
+        JPanel toolbarRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 4));
+        toolbarRow.setOpaque(false);
+
+        btnFilter = ModernTheme.createPrimaryButton("Apply Filter");
+        btnFilter.setPreferredSize(new Dimension(125, 32));
+
+        btnResetFilter = ModernTheme.createSecondaryButton("Reset Filters");
+        btnResetFilter.setPreferredSize(new Dimension(120, 32));
+
+        lblCourseCount = new JLabel("Loading courses...");
+        lblCourseCount.setFont(ModernTheme.FONT_REGULAR);
+        lblCourseCount.setForeground(ModernTheme.TEXT_MUTED);
+
+        toolbarRow.add(btnFilter);
+        toolbarRow.add(btnResetFilter);
+        toolbarRow.add(Box.createHorizontalStrut(15));
+        toolbarRow.add(lblCourseCount);
+
+        btnFilter.addActionListener(e -> loadCourses());
+        btnResetFilter.addActionListener(e -> {
+            cmbDepartmentFilter.setSelectedIndex(0);
+            cmbYearFilter.setSelectedIndex(0);
+            cmbSemesterFilter.setSelectedIndex(0);
+            loadCourses();
+        });
+
+        filterAndToolbarPanel.add(filterRow);
+        filterAndToolbarPanel.add(Box.createVerticalStrut(4));
+        filterAndToolbarPanel.add(toolbarRow);
+
+        tablePanel.add(filterAndToolbarPanel, BorderLayout.NORTH);
+
+        JScrollPane tableScrollPane = new JScrollPane(courseTable);
+        tableScrollPane.setBorder(null);
+        tableScrollPane.getViewport().setBackground(Color.WHITE);
+        tablePanel.add(tableScrollPane, BorderLayout.CENTER);
+
+        // Right-Side Form Panel (Course Specification Card)
         JPanel formCard = ModernTheme.createCardPanel();
-        formCard.setLayout(new BorderLayout());
-        formCard.setPreferredSize(new Dimension(360, 500));
+        formCard.setLayout(new BorderLayout(0, 10));
+        formCard.setMinimumSize(new Dimension(360, 400));
+        formCard.setPreferredSize(new Dimension(420, 650));
+
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setOpaque(false);
+        headerPanel.setBorder(new EmptyBorder(0, 0, 8, 0));
 
         JLabel formHeader = new JLabel("Course Specification");
         formHeader.setFont(ModernTheme.FONT_SUBTITLE);
         formHeader.setForeground(ModernTheme.PRIMARY);
-        formHeader.setBorder(new EmptyBorder(0, 0, 10, 0));
-        formCard.add(formHeader, BorderLayout.NORTH);
 
+        JLabel formSubHeader = new JLabel("Create, view, or update course modules");
+        formSubHeader.setFont(ModernTheme.FONT_SMALL);
+        formSubHeader.setForeground(ModernTheme.TEXT_MUTED);
+
+        headerPanel.add(formHeader, BorderLayout.NORTH);
+        headerPanel.add(formSubHeader, BorderLayout.SOUTH);
+        formCard.add(headerPanel, BorderLayout.NORTH);
+
+        // Form fields inside a scrollable container for responsiveness
         JPanel fields = new JPanel();
         fields.setLayout(new BoxLayout(fields, BoxLayout.Y_AXIS));
         fields.setBackground(Color.WHITE);
+        fields.setBorder(new EmptyBorder(4, 4, 4, 10));
 
         txtCourseId = new JTextField();
         txtCourseId.setVisible(false);
@@ -161,37 +269,63 @@ public class CourseManagementPanel extends JPanel {
         chkPractical = new JCheckBox("Includes Practical Component (15 Sessions)", false);
         chkTheory.setBackground(Color.WHITE);
         chkPractical.setBackground(Color.WHITE);
+        chkTheory.setFont(ModernTheme.FONT_REGULAR);
+        chkPractical.setFont(ModernTheme.FONT_REGULAR);
 
         txtDescription = new JTextArea(4, 20);
         txtDescription.setFont(ModernTheme.FONT_REGULAR);
         txtDescription.setLineWrap(true);
         txtDescription.setWrapStyleWord(true);
-        txtDescription.setBorder(new LineBorder(ModernTheme.BORDER, 1));
+        txtDescription.setBorder(new EmptyBorder(6, 8, 6, 8));
 
-        fields.add(createRow("Course Code (e.g. ICT2132):", txtCourseCode));
+        JScrollPane descScroll = new JScrollPane(txtDescription);
+        descScroll.setBorder(new LineBorder(ModernTheme.BORDER, 1));
+        descScroll.setPreferredSize(new Dimension(200, 85));
+
+        fields.add(createRow("Course Code (Auto-Generated):", txtCourseCode));
         fields.add(createRow("Course Name / Title:", txtCourseName));
         fields.add(createRow("Credit Value:", spinCredits));
         fields.add(createRow("Study Year (1-4):", spinStudyYear));
         fields.add(createRow("Semester Number (1-2):", spinSemester));
         fields.add(createRow("Offering Department:", cmbDepartment));
         fields.add(createRow("Assigned Lecturer:", cmbLecturer));
-        fields.add(Box.createRigidArea(new Dimension(0, 5)));
-        fields.add(chkTheory);
-        fields.add(chkPractical);
-        fields.add(Box.createRigidArea(new Dimension(0, 8)));
-        fields.add(createRow("Description / Syllabus Outline:", new JScrollPane(txtDescription)));
+        fields.add(Box.createRigidArea(new Dimension(0, 4)));
 
-        formCard.add(fields, BorderLayout.CENTER);
+        JPanel checkPanel = new JPanel(new GridLayout(2, 1, 0, 4));
+        checkPanel.setOpaque(false);
+        checkPanel.setBorder(new EmptyBorder(4, 2, 4, 2));
+        checkPanel.add(chkTheory);
+        checkPanel.add(chkPractical);
+        fields.add(checkPanel);
 
-        // Buttons
+        fields.add(Box.createRigidArea(new Dimension(0, 6)));
+        fields.add(createRow("Description / Syllabus Outline:", descScroll));
+
+        JScrollPane fieldsScrollPane = new JScrollPane(fields);
+        fieldsScrollPane.setBorder(null);
+        fieldsScrollPane.setOpaque(false);
+        fieldsScrollPane.getViewport().setOpaque(false);
+        fieldsScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        fieldsScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        formCard.add(fieldsScrollPane, BorderLayout.CENTER);
+
+        // Action Buttons docked at bottom (always fully visible, consistent heights)
         JPanel btnPanel = new JPanel(new GridLayout(2, 2, 8, 8));
         btnPanel.setOpaque(false);
-        btnPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
+        btnPanel.setBorder(new CompoundBorder(
+            BorderFactory.createMatteBorder(1, 0, 0, 0, ModernTheme.BORDER),
+            new EmptyBorder(10, 0, 0, 0)
+        ));
 
         btnAdd = ModernTheme.createPrimaryButton("Add Course");
         btnUpdate = ModernTheme.createSuccessButton("Update Course");
         btnDelete = ModernTheme.createDangerButton("Delete Course");
         btnClear = ModernTheme.createSecondaryButton("Clear Form");
+
+        btnAdd.setPreferredSize(new Dimension(0, 36));
+        btnUpdate.setPreferredSize(new Dimension(0, 36));
+        btnDelete.setPreferredSize(new Dimension(0, 36));
+        btnClear.setPreferredSize(new Dimension(0, 36));
 
         btnPanel.add(btnAdd);
         btnPanel.add(btnUpdate);
@@ -213,17 +347,25 @@ public class CourseManagementPanel extends JPanel {
     }
 
     private JPanel createRow(String labelText, JComponent comp) {
-        JPanel p = new JPanel(new BorderLayout(5, 2));
+        JPanel p = new JPanel(new BorderLayout(5, 3));
         p.setOpaque(false);
-        p.setMaximumSize(new Dimension(Short.MAX_VALUE, 50));
+        p.setMaximumSize(new Dimension(Short.MAX_VALUE, 58));
         JLabel lbl = new JLabel(labelText);
-        lbl.setFont(ModernTheme.FONT_SMALL);
-        lbl.setForeground(ModernTheme.TEXT_MUTED);
+        lbl.setFont(ModernTheme.FONT_BOLD);
+        lbl.setForeground(ModernTheme.TEXT_DARK);
 
         comp.setFont(ModernTheme.FONT_REGULAR);
         if (comp instanceof JTextField) {
-            comp.setPreferredSize(new Dimension(200, 26));
-            comp.setBorder(new CompoundBorder(new LineBorder(ModernTheme.BORDER, 1), new EmptyBorder(2, 6, 2, 6)));
+            comp.setPreferredSize(new Dimension(200, 30));
+            comp.setBorder(new CompoundBorder(new LineBorder(ModernTheme.BORDER, 1), new EmptyBorder(4, 8, 4, 8)));
+            if (!((JTextField) comp).isEditable()) {
+                comp.setBackground(new Color(241, 245, 249)); // light slate tint for read-only
+            }
+        } else if (comp instanceof JComboBox) {
+            comp.setPreferredSize(new Dimension(200, 30));
+            comp.setBackground(Color.WHITE);
+        } else if (comp instanceof JSpinner) {
+            comp.setPreferredSize(new Dimension(200, 30));
         }
 
         p.add(lbl, BorderLayout.NORTH);
@@ -280,6 +422,48 @@ public class CourseManagementPanel extends JPanel {
                     c.getDepartmentCode() != null ? c.getDepartmentCode() : c.getDepartmentName(),
                     c.isHasTheory() ? "Yes" : "No",
                     c.isHasPractical() ? "Yes" : "No"
+            });
+        }
+        if (lblCourseCount != null) {
+            lblCourseCount.setText("Showing " + list.size() + " curriculum module" + (list.size() == 1 ? "" : "s"));
+        }
+        styleCourseTableColumns();
+    }
+
+    private void styleCourseTableColumns() {
+        int[] colWidths = {45, 95, 210, 60, 55, 55, 120, 65, 65};
+        for (int i = 0; i < colWidths.length && i < courseTable.getColumnCount(); i++) {
+            courseTable.getColumnModel().getColumn(i).setPreferredWidth(colWidths[i]);
+            if (i == 0) {
+                courseTable.getColumnModel().getColumn(i).setMinWidth(35);
+                courseTable.getColumnModel().getColumn(i).setMaxWidth(60);
+            } else if (i == 3 || i == 4 || i == 5) {
+                courseTable.getColumnModel().getColumn(i).setMinWidth(45);
+                courseTable.getColumnModel().getColumn(i).setMaxWidth(75);
+            } else if (i == 7 || i == 8) {
+                courseTable.getColumnModel().getColumn(i).setMinWidth(55);
+                courseTable.getColumnModel().getColumn(i).setMaxWidth(80);
+            }
+        }
+
+        for (int i = 0; i < courseTable.getColumnCount(); i++) {
+            final int colIndex = i;
+            courseTable.getColumnModel().getColumn(i).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+                @Override
+                public Component getTableCellRendererComponent(JTable table, Object value,
+                                                               boolean isSelected, boolean hasFocus, int row, int col) {
+                    Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+                    setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+                    if (colIndex == 0 || colIndex == 3 || colIndex == 4 || colIndex == 5 || colIndex == 7 || colIndex == 8) {
+                        setHorizontalAlignment(SwingConstants.CENTER);
+                    } else {
+                        setHorizontalAlignment(SwingConstants.LEFT);
+                    }
+                    if (!isSelected) {
+                        c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(248, 250, 252));
+                    }
+                    return c;
+                }
             });
         }
     }

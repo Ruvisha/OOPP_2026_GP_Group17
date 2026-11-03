@@ -49,8 +49,7 @@ public class DateTimePickerPanel extends JPanel {
         txtDate.setFont(ModernTheme.FONT_REGULAR);
         txtDate.setBorder(new CompoundBorder(
                 new LineBorder(ModernTheme.BORDER, 1),
-                new EmptyBorder(5, 8, 5, 8)
-        ));
+                new EmptyBorder(5, 8, 5, 8)));
         txtDate.setToolTipText("Selected Date (Click Calendar button to pick)");
 
         // Calendar Button
@@ -93,7 +92,7 @@ public class DateTimePickerPanel extends JPanel {
         cmbMinute.setToolTipText("Select Minute (00 - 59)");
 
         // AM / PM Dropdown
-        cmbAmPm = new JComboBox<>(new String[]{"AM", "PM"});
+        cmbAmPm = new JComboBox<>(new String[] { "AM", "PM" });
         cmbAmPm.setFont(ModernTheme.FONT_REGULAR);
         cmbAmPm.setSelectedItem("AM");
         cmbAmPm.setToolTipText("Select AM or PM");
@@ -132,8 +131,8 @@ public class DateTimePickerPanel extends JPanel {
         dialog.setResizable(false);
 
         LocalDate initial = selectedDate != null ? selectedDate : LocalDate.now(COLOMBO_ZONE);
-        final int[] viewYear = {initial.getYear()};
-        final int[] viewMonth = {initial.getMonthValue()}; // 1 - 12
+        final int[] viewYear = { initial.getYear() };
+        final int[] viewMonth = { initial.getMonthValue() }; // 1 - 12
 
         // --- Navigation Header Panel ---
         JPanel headerPanel = new JPanel(new BorderLayout(4, 4));
@@ -189,7 +188,7 @@ public class DateTimePickerPanel extends JPanel {
         // Days of Week Header
         JPanel daysOfWeekHeader = new JPanel(new GridLayout(1, 7, 2, 2));
         daysOfWeekHeader.setBackground(ModernTheme.PRIMARY_LIGHT);
-        String[] dayNames = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+        String[] dayNames = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
         for (String dayName : dayNames) {
             JLabel lblDay = new JLabel(dayName, SwingConstants.CENTER);
             lblDay.setFont(ModernTheme.FONT_BOLD);
@@ -206,7 +205,7 @@ public class DateTimePickerPanel extends JPanel {
         calendarContainer.add(gridPanel, BorderLayout.CENTER);
 
         // Refresh Grid Runnable
-        final boolean[] isUpdatingSelectors = {false};
+        final boolean[] isUpdatingSelectors = { false };
         Runnable refreshDays = () -> {
             gridPanel.removeAll();
             LocalDate firstDayOfMonth = LocalDate.of(viewYear[0], viewMonth[0], 1);
@@ -319,13 +318,15 @@ public class DateTimePickerPanel extends JPanel {
         });
 
         cmbMonthSelect.addActionListener(ev -> {
-            if (isUpdatingSelectors[0]) return;
+            if (isUpdatingSelectors[0])
+                return;
             viewMonth[0] = cmbMonthSelect.getSelectedIndex() + 1;
             refreshDays.run();
         });
 
         cmbYearSelect.addActionListener(ev -> {
-            if (isUpdatingSelectors[0]) return;
+            if (isUpdatingSelectors[0])
+                return;
             Integer y = (Integer) cmbYearSelect.getSelectedItem();
             if (y != null) {
                 viewYear[0] = y;
@@ -403,11 +404,13 @@ public class DateTimePickerPanel extends JPanel {
     }
 
     /**
-     * Returns the selected Date & Time as LocalDateTime, or null if no date selected.
+     * Returns the selected Date & Time as LocalDateTime, or null if no date
+     * selected.
      */
     public LocalDateTime getLocalDateTime() {
         Timestamp ts = getTimestamp();
-        if (ts == null) return null;
+        if (ts == null)
+            return null;
         return ts.toInstant().atZone(COLOMBO_ZONE).toLocalDateTime();
     }
 
@@ -429,7 +432,8 @@ public class DateTimePickerPanel extends JPanel {
 
         String amPm = hour24 >= 12 ? "PM" : "AM";
         int hour12 = hour24 % 12;
-        if (hour12 == 0) hour12 = 12;
+        if (hour12 == 0)
+            hour12 = 12;
 
         cmbHour.setSelectedItem(String.format("%02d", hour12));
         cmbMinute.setSelectedItem(String.format("%02d", minute));
