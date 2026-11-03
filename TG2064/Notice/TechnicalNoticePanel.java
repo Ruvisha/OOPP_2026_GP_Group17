@@ -1,5 +1,4 @@
 package com.fot.ams.ui.technical;
-
 import com.fot.ams.model.Notice;
 import com.fot.ams.service.NoticeService;
 import com.fot.ams.ui.common.ModernTheme;
@@ -11,7 +10,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.List;
-
 /**
  * Notice viewer panel for Technical Officers configured with card viewing for full notice contents.
  */
@@ -24,7 +22,6 @@ public class TechnicalNoticePanel extends JPanel {
         initComponents();
         loadNotices();
     }
-
     private void initComponents() {
         setLayout(new BorderLayout(15, 15));
         setBackground(ModernTheme.BG_MAIN);
