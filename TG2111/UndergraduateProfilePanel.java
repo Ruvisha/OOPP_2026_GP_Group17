@@ -7,6 +7,7 @@ import com.fot.ams.service.AuthenticationService;
 import com.fot.ams.service.UserService;
 import com.fot.ams.ui.common.ModernTheme;
 import com.fot.ams.util.SessionManager;
+import com.fot.ams.util.ValidationUtil;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -146,6 +147,7 @@ public class UndergraduateProfilePanel extends JPanel {
 
         txtCurrentPass = new JPasswordField();
         txtNewPass = new JPasswordField();
+        txtNewPass.setToolTipText(ValidationUtil.PASSWORD_REQUIREMENTS_MESSAGE);
         txtConfirmPass = new JPasswordField();
 
         pf.add(createRow("Current Password:", txtCurrentPass));

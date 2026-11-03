@@ -40,7 +40,7 @@ public class UserService {
         ValidationUtil.validateNotEmpty(user.getFullName(), "Full name");
         ValidationUtil.validateEmail(user.getEmail());
         ValidationUtil.validatePhone(user.getPhone());
-        ValidationUtil.validateNotEmpty(plainPassword, "Password");
+        ValidationUtil.validatePassword(plainPassword, "Password");
 
         if (userDAO.isUsernameTaken(user.getUsername().trim(), 0)) {
             throw new ValidationException("Username '" + user.getUsername() + "' is already registered.");

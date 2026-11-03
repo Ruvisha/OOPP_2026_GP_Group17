@@ -17,12 +17,27 @@ public class ValidationUtil {
         "^(\\+94|0)[0-9]{9}$"
     );
 
+    public static final String PASSWORD_REQUIREMENTS_MESSAGE =
+        "Password must be at least 8 characters long and contain at least one uppercase letter (A-Z), one lowercase letter (a-z), and one number (0-9).";
+
     private ValidationUtil() {
     }
 
     public static void validateNotEmpty(String value, String fieldName) throws ValidationException {
         if (value == null || value.trim().isEmpty()) {
             throw new ValidationException(fieldName + " cannot be empty.");
+        }
+    }
+
+    public static void validatePassword(String password) throws ValidationException {
+        validatePassword(password, "Password");
+    }
+
+    public static void validatePassword(String password, String fieldName) throws ValidationException {
+        validateNotEmpty(password, fieldName);
+        if (!PasswordUtil.isValidPassword(password)) {
+            String label = (fieldName != null && !fieldName.trim().isEmpty()) ? fieldName : "Password";
+            throw new ValidationException(label + " must be at least 8 characters long and contain at least one uppercase letter (A-Z), one lowercase letter (a-z), and one number (0-9).");
         }
     }
 

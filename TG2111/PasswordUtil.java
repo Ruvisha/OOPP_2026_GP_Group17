@@ -49,4 +49,35 @@ public class PasswordUtil {
         String hashedInput = hashPassword(plainPassword);
         return hashedInput.equalsIgnoreCase(storedPassword) || plainPassword.equals(storedPassword);
     }
+
+    /**
+     * Validates whether a password meets the security requirements:
+     * 1. Minimum password length must be exactly 8 characters or more.
+     * 2. Must contain at least one uppercase letter (A-Z).
+     * 3. Must contain at least one lowercase letter (a-z).
+     * 4. Must contain at least one number (0-9).
+     * 5. Special symbols are optional.
+     * 6. Passwords shorter than 8 characters are rejected.
+     *
+     * @param password plain text password to validate
+     * @return true if password meets all requirements, false otherwise
+     */
+    public static boolean isValidPassword(String password) {
+        if (password == null || password.length() < 8 || password.trim().length() < 8) {
+            return false;
+        }
+        boolean hasUpper = false;
+        boolean hasLower = false;
+        boolean hasDigit = false;
+        for (char c : password.toCharArray()) {
+            if (c >= 'A' && c <= 'Z') {
+                hasUpper = true;
+            } else if (c >= 'a' && c <= 'z') {
+                hasLower = true;
+            } else if (c >= '0' && c <= '9') {
+                hasDigit = true;
+            }
+        }
+        return hasUpper && hasLower && hasDigit;
+    }
 }

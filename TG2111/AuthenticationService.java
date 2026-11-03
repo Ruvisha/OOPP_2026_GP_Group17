@@ -67,11 +67,7 @@ public class AuthenticationService {
     public boolean changePassword(int userId, String oldPassword, String newPassword)
             throws AuthenticationException, ValidationException {
         ValidationUtil.validateNotEmpty(oldPassword, "Current password");
-        ValidationUtil.validateNotEmpty(newPassword, "New password");
-
-        if (newPassword.length() < 4) {
-            throw new ValidationException("New password must be at least 4 characters long.");
-        }
+        ValidationUtil.validatePassword(newPassword, "New password");
 
         User user = userDAO.getUserById(userId);
         if (user == null) {

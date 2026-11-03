@@ -7,6 +7,7 @@ import com.fot.ams.service.AuthenticationService;
 import com.fot.ams.service.UserService;
 import com.fot.ams.ui.common.ModernTheme;
 import com.fot.ams.util.SessionManager;
+import com.fot.ams.util.ValidationUtil;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -112,13 +113,14 @@ public class LecturerProfilePanel extends JPanel {
 
         txtCurrentPass = new JPasswordField();
         txtNewPass = new JPasswordField();
+        txtNewPass.setToolTipText(ValidationUtil.PASSWORD_REQUIREMENTS_MESSAGE);
         txtConfirmPass = new JPasswordField();
 
         passFields.add(createRow("Current Password:", txtCurrentPass));
         passFields.add(createRow("New Password:", txtNewPass));
         passFields.add(createRow("Confirm New Password:", txtConfirmPass));
 
-        JLabel note = new JLabel("<html><i>Note: Choose a strong password containing at least 4 characters.</i></html>");
+        JLabel note = new JLabel("<html><i>Note: Choose a strong password (min 8 characters, with uppercase, lowercase, and a number).</i></html>");
         note.setFont(ModernTheme.FONT_SMALL);
         note.setForeground(ModernTheme.TEXT_MUTED);
         passFields.add(note);
