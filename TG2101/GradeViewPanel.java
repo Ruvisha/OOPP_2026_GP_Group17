@@ -84,8 +84,8 @@ public class GradeViewPanel extends JPanel {
         JLabel footer = new JLabel(
             "<html><b>Grading Scale (UGC Commission Circular No. 12-2024):</b> " +
             "A+/A (4.00, \u226580) | A- (3.70, 75-79) | B+ (3.30, 70-74) | B (3.00, 65-69) | B- (2.70, 60-64) | " +
-            "C+ (2.30, 55-59) | C (2.00, 50-54) | C- (1.70, 45-49) | D+ (1.30, 40-44) | D (1.00, 35-39) | E (0.00, &lt;35). " +
-            "Repeat pass grades are capped at C (2.00 GP).</html>"
+            "C+ (2.30, 55-59) | C (2.00, 50-54) | C- (1.70, 45-49) | D (1.30, 40-44) | E (0.00, &lt;40). " +
+            "A course must be repeated only when CA or ESA is below 40. Repeat pass grades are capped at C (2.00 GP).</html>"
         );
         footer.setFont(ModernTheme.FONT_SMALL);
         footer.setForeground(ModernTheme.TEXT_MUTED);
@@ -134,7 +134,7 @@ public class GradeViewPanel extends JPanel {
                 String.format("%.1f", g.getTotalMark()),
                 g.getGradeLetter(),
                 String.format("%.2f", g.getGradePoint()),
-                g.isRepeat() ? "REPEAT PASS" : (g.getGradePoint() >= 2.0 ? "PASS" : "FAIL / REPEAT")
+                g.isRepeat() ? "REPEAT REQUIRED" : "PASS"
             });
         }
 

@@ -15,6 +15,8 @@ import java.util.List;
  * Centralized grading criteria ensuring consistent calculations across all modules.
  */
 public class GradeService {
+    private static final double COMPONENT_PASS_MARK = 40.0;
+
     private final GradeDAO gradeDAO;
     private final MarkDAO markDAO;
     private final CourseEnrollmentDAO enrollmentDAO;
@@ -58,9 +60,7 @@ public class GradeService {
             letter = "C";
         } else if (totalMark >= 45.0) {
             letter = "C-";
-        } else if (totalMark >= 40.0) {
-            letter = "D+";
-        } else if (totalMark >= 35.0) {
+        } else if (totalMark >= COMPONENT_PASS_MARK) {
             letter = "D";
         } else {
             letter = "E";
@@ -88,10 +88,23 @@ public class GradeService {
             case "C+" -> 2.30;
             case "C" -> 2.00;
             case "C-" -> 1.70;
-            case "D+" -> 1.30;
-            case "D" -> 1.00;
+            case "D" -> 1.30;
             default -> 0.00; // "E" or invalid
         };
+    }
+
+    public static boolean requiresRepeat(double caMark, double finalExamMark) {
+        return caMark < COMPONENT_PASS_MARK || finalExamMark < COMPONENT_PASS_MARK;
+    }
+
+    public static String calculateFailureGradeLetter(double caMark, double finalExamMark) {
+        boolean caFailed = caMark < COMPONENT_PASS_MARK;
+        boolean finalExamFailed = finalExamMark < COMPONENT_PASS_MARK;
+        if (!caFailed && !finalExamFailed) {
+            throw new IllegalArgumentException("A failure grade requires CA or ESA below 40.");
+        }
+        if (caFailed && finalExamFailed) return "E";
+        return caFailed ? "EC" : "EE";
     }
 
     /**
@@ -107,24 +120,25 @@ public class GradeService {
         double gradePoint;
 
         User user = userDAO.getUserById(studentId);
-        // Check studentType field (REPEAT/REGULAR/BATCH_MISSED) — not roleTitle which is always "Undergraduate"
-        boolean isRepeat = user instanceof com.fot.ams.model.Undergraduate
+        // A student's existing type controls the repeat-attempt grade cap, not whether
+        // this course must be repeated after the current assessment.
+        boolean isRepeatStudent = user instanceof com.fot.ams.model.Undergraduate
                 && "REPEAT".equalsIgnoreCase(((com.fot.ams.model.Undergraduate) user).getStudentType());
+        boolean needsRepeat = requiresRepeat(caMark, finalExamMark);
 
-        // Check if student satisfied CA >= 40% eligibility
-        if (caMark < 40.0) {
-            totalMark = caMark * 0.40 + finalExamMark * 0.60;
-            gradeLetter = "E"; // Ineligible due to CA failure
+        if (needsRepeat) {
+            totalMark = Math.round((caMark * 0.40 + finalExamMark * 0.60) * 10.0) / 10.0;
+            gradeLetter = calculateFailureGradeLetter(caMark, finalExamMark);
             gradePoint = 0.00;
         } else {
             totalMark = Math.round((caMark * 0.40 + finalExamMark * 0.60) * 10.0) / 10.0;
-            gradeLetter = calculateGradeLetter(totalMark, isRepeat);
+            gradeLetter = calculateGradeLetter(totalMark, isRepeatStudent);
             gradePoint = calculateGradePoint(gradeLetter);
         }
 
         Grade grade = new Grade(
             0, studentId, courseId, academicYear != null ? academicYear : "2024/2025",
-            caMark, finalExamMark, totalMark, gradeLetter, gradePoint, isRepeat
+            caMark, finalExamMark, totalMark, gradeLetter, gradePoint, needsRepeat
         );
 
         gradeDAO.saveOrUpdateGrade(grade);

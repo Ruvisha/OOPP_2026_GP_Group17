@@ -311,7 +311,7 @@ public class MarksPanel extends JPanel {
         top.add(btnCalc);
         top.add(btnRefresh);
 
-        String[] cols = {"Reg No", "Student Name", "CA Mark (40%)", "Final Exam (60%)", "Total Mark", "Grade Letter", "Grade Point", "Repeat Flag"};
+        String[] cols = {"Reg No", "Student Name", "CA Mark (40%)", "Final Exam (60%)", "Total Mark", "Grade Letter", "Grade Point", "Repeat Required?"};
         gradeTableModel = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -327,7 +327,7 @@ public class MarksPanel extends JPanel {
         tablePanel.setBorder(new LineBorder(ModernTheme.BORDER, 1));
         tablePanel.add(new JScrollPane(gradeTable), BorderLayout.CENTER);
 
-        JLabel note = new JLabel("Grading Standard: UGC Commission Circular No. 12-2024. Repeat student pass grades capped at C (2.00 GP). CA < 40% results in Grade E.");
+        JLabel note = new JLabel("Grading Standard: UGC Commission Circular No. 12-2024. Repeat only if CA or ESA is below 40%; E = both fail, EC = CA only, EE = ESA only. Repeat pass grades are capped at C (2.00 GP).");
         note.setFont(ModernTheme.FONT_SMALL);
         note.setForeground(ModernTheme.TEXT_MUTED);
         note.setBorder(new EmptyBorder(8, 10, 8, 10));
@@ -525,7 +525,7 @@ public class MarksPanel extends JPanel {
                 String.format("%.1f", g.getTotalMark()),
                 g.getGradeLetter(),
                 String.format("%.2f", g.getGradePoint()),
-                g.isRepeat() ? "REPEAT" : "REGULAR"
+                g.isRepeat() ? "REPEAT REQUIRED" : "PASS"
             });
         }
     }

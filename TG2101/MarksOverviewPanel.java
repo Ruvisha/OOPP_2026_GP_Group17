@@ -125,7 +125,7 @@ public class MarksOverviewPanel extends JPanel {
         panel.add(controls, BorderLayout.NORTH);
 
         // Grades table
-        String[] cols = {"Reg No", "Student Name", "CA Mark (%)", "Final Exam (%)", "Total (%)", "Grade", "Grade Point", "Repeat"};
+        String[] cols = {"Reg No", "Student Name", "CA Mark (%)", "Final Exam (%)", "Total (%)", "Grade", "Grade Point", "Repeat Required?"};
         gradesModel = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -264,7 +264,7 @@ public class MarksOverviewPanel extends JPanel {
                     gradesModel.setRowCount(0);
                     int aPlus = 0, aCount = 0, bCount = 0, cCount = 0, dCount = 0, eCount = 0;
                     for (Grade g : grades) {
-                        String repeat = g.isRepeat() ? "Yes" : "No";
+                        String repeat = g.isRepeat() ? "Required" : "No";
                         gradesModel.addRow(new Object[]{
                                 g.getStudentRegNo(),
                                 g.getStudentName(),
