@@ -169,7 +169,12 @@ public class LoginFrame extends JFrame {
 
         loginButton = ModernTheme.createPrimaryButton("Login to Portal");
         loginButton.setPreferredSize(new Dimension(380, 42));
-        loginButton.setMaximumSize(new Dimension(Short.MAX_VALUE, 42));
+        loginButton.setMaximumSize(new Dimension(380, 42));
+        loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JPanel loginButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        loginButtonPanel.setOpaque(false);
+        loginButtonPanel.add(loginButton);
 
         clearButton = ModernTheme.createSecondaryButton("Clear");
         exitButton = ModernTheme.createDangerButton("Exit");
@@ -191,7 +196,7 @@ public class LoginFrame extends JFrame {
         formCard.add(Box.createRigidArea(new Dimension(0, 6)));
         formCard.add(passwordPanel);
         formCard.add(Box.createRigidArea(new Dimension(0, 22)));
-        formCard.add(loginButton);
+        formCard.add(loginButtonPanel);
         formCard.add(Box.createRigidArea(new Dimension(0, 10)));
         formCard.add(buttonRow);
 
