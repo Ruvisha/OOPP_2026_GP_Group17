@@ -5,6 +5,8 @@ import com.fot.ams.exception.ValidationException;
 import com.fot.ams.model.Medical;
 import com.fot.ams.util.ValidationUtil;
 
+import javax.swing.*;
+import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -53,6 +55,48 @@ public class MedicalService {
         } catch (IOException e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    // Implemented download method with JFileChooser support
+    public void downloadMedicalReport(int medicalId, Component parentComponent) {
+        String filePath = medicalDAO.getMedicalReportPath(medicalId);
+
+        if (filePath != null && !filePath.isEmpty()) {
+            File sourceFile = new File(filePath);
+
+            if (!sourceFile.exists()) {
+                JOptionPane.showMessageDialog(parentComponent,
+                        "The medical report file could not be found on the server/storage.",
+                        "File Not Found",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setSelectedFile(new File(sourceFile.getName()));
+            int userSelection = fileChooser.showSaveDialog(parentComponent);
+
+            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                File destinationFile = fileChooser.getSelectedFile();
+                try {
+                    Files.copy(sourceFile.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    JOptionPane.showMessageDialog(parentComponent,
+                            "Medical report downloaded successfully to:\n" + destinationFile.getAbsolutePath(),
+                            "Download Success",
+                            JOptionPane.INFORMATION_MESSAGE);
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(parentComponent,
+                            "Failed to download file: " + e.getMessage(),
+                            "Download Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } else {
+            JOptionPane.showMessageDialog(parentComponent,
+                    "No medical report uploaded for this record.",
+                    "Missing Report",
+                    JOptionPane.WARNING_MESSAGE);
         }
     }
 

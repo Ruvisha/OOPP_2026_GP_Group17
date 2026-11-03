@@ -61,6 +61,29 @@ public class MedicalDAO {
         return list;
     }
 
+    // Fixed getMedicalReportPath method
+    public String getMedicalReportPath(int medicalId) {
+        String filePath = null;
+        // Changed table name from medical_records to medical to match your actual database schema
+        String query = "SELECT medical_doc_path FROM medical WHERE medical_id = ?";
+
+        // Properly open connection using DatabaseConnection.getConnection()
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, medicalId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    filePath = rs.getString("medical_doc_path");
+                }
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Failed to fetch medical report path: " + e.getMessage(), e);
+        }
+
+        return filePath;
+    }
+
     public boolean insertMedical(Medical medical) {
         String query = "INSERT INTO medical (student_id, course_id, session_type, session_date, submission_date, reason, medical_doc_path, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();

@@ -48,6 +48,7 @@ public class MedicalPanel extends JPanel {
     private JButton btnReject;
     private JButton btnDelete;
     private JButton btnClear;
+    private JButton btnDownload; // Added download button variable
 
     private static class StudentItem {
         final int id;
@@ -184,8 +185,8 @@ public class MedicalPanel extends JPanel {
 
         formCard.add(new JScrollPane(fields), BorderLayout.CENTER);
 
-        // Action Buttons Row
-        JPanel btnPanel = new JPanel(new GridLayout(1, 5, 6, 6)); // Adjusted layout grid for horizontal button alignment under form
+        // Action Buttons Row (Updated grid to fit 6 buttons)
+        JPanel btnPanel = new JPanel(new GridLayout(1, 6, 6, 6));
         btnPanel.setOpaque(false);
         btnPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
 
@@ -194,12 +195,15 @@ public class MedicalPanel extends JPanel {
         btnReject = ModernTheme.createDangerButton("Reject Medical");
         btnDelete = ModernTheme.createDangerButton("Delete Record");
         btnClear = ModernTheme.createSecondaryButton("Clear Form");
+        btnDownload = ModernTheme.createSecondaryButton("Download Report"); // Initialized download button
 
         btnPanel.add(btnAdd);
         btnPanel.add(btnApprove);
         btnPanel.add(btnReject);
         btnPanel.add(btnDelete);
         btnPanel.add(btnClear);
+        btnPanel.add(btnDownload); // Added to panel layout
+
         formCard.add(btnPanel, BorderLayout.SOUTH);
 
         // Assign top and bottom components to the vertical split pane
@@ -214,6 +218,7 @@ public class MedicalPanel extends JPanel {
         btnReject.addActionListener(e -> handleSetStatus("NOT_APPROVED"));
         btnDelete.addActionListener(e -> handleDelete());
         btnClear.addActionListener(e -> clearForm());
+        btnDownload.addActionListener(e -> handleDownloadReport()); // Action listener for download
     }
 
     private JPanel createRow(String labelText, JComponent comp) {
@@ -395,6 +400,21 @@ public class MedicalPanel extends JPanel {
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Error deleting record: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
+        }
+    }
+
+    // Added handler to download/save the selected medical report
+    private void handleDownloadReport() {
+        if (txtMedicalId.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please select a medical record from the table first.", "Selection Required", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            int id = Integer.parseInt(txtMedicalId.getText());
+            medicalService.downloadMedicalReport(id, this);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error downloading report: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }
