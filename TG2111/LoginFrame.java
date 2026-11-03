@@ -37,6 +37,7 @@ public class LoginFrame extends JFrame {
         initComponents();
     }
 
+
     private void initComponents() {
         setTitle("Faculty of Technology Academic Management System - University of Ruhuna");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -44,10 +45,13 @@ public class LoginFrame extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
 
+
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(ModernTheme.BG_MAIN);
 
+
         // Left Banner Panel (Branding)
+
         JPanel bannerPanel = new JPanel();
         bannerPanel.setPreferredSize(new Dimension(360, 600));
         bannerPanel.setBackground(ModernTheme.PRIMARY);
@@ -104,11 +108,15 @@ public class LoginFrame extends JFrame {
         bannerPanel.add(systemTitle);
         bannerPanel.add(systemSubtitle);
         bannerPanel.add(Box.createRigidArea(new Dimension(0, 40)));
+
+
         //bannerPanel.add(courseUnit);
         // bannerPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         //bannerPanel.add(groupLabel);
 
         // Right Form Panel
+
+        
         JPanel formContainer = new JPanel(new GridBagLayout());
         formContainer.setBackground(ModernTheme.BG_MAIN);
 
