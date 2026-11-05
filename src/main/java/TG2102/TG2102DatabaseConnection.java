@@ -10,10 +10,10 @@ import java.sql.SQLException;
  */
 public final class TG2102DatabaseConnection {
     private static final String HOST = System.getProperty("tg2102.db.host", "localhost");
-    private static final int PORT = Integer.getInteger("tg2102.db.port", 3307);
+    private static final int PORT = Integer.getInteger("tg2102.db.port", 3306);
     private static final String DATABASE = System.getProperty("tg2102.db.database", "faculty_academic_management");
     private static final String USERNAME = System.getProperty("tg2102.db.username", "root");
-    private static final String PASSWORD = System.getProperty("tg2102.db.password", "root123");
+    private static final String PASSWORD = System.getProperty("tg2102.db.password", "");
 
     static {
         try {
