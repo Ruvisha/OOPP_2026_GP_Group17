@@ -364,7 +364,10 @@ public class MarksPanel extends JPanel {
         cmbEligCourse.removeAllItems();
         cmbGradeCourse.removeAllItems();
 
-        List<Course> list = courseDAO.getAllCourses();
+        List<Course> list = java.util.Collections.emptyList();
+        try {
+            list = courseDAO.getAllCourses();
+        } catch (Exception ignored) {}
         for (Course c : list) {
             CourseItem item = new CourseItem(c.getCourseId(), c.getCourseCode(), c.getCourseName());
             cmbMarksCourse.addItem(item);

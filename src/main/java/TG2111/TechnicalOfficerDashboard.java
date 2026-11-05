@@ -1,11 +1,10 @@
 package com.fot.ams.ui.technical;
 
-import com.fot.ams.dao.AttendanceDAO;
-import com.fot.ams.dao.MedicalDAO;
 import com.fot.ams.model.User;
 import com.fot.ams.ui.LoginFrame;
+import com.fot.ams.ui.common.DashboardHeaderPanel;
+import com.fot.ams.ui.common.ModernIcons;
 import com.fot.ams.ui.common.ModernTheme;
-import com.fot.ams.util.DateUtil;
 import com.fot.ams.util.SessionManager;
 
 import javax.swing.*;
@@ -13,12 +12,15 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.util.Date;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.RoundRectangle2D;
 
 /**
- * Main Technical Operations Dashboard Frame.
+ * Modern Technical Operations Dashboard for Faculty of Technology.
+ * University of Ruhuna - Member 04 Module.
  */
-public class TechnicalOfficerDashboard extends JFrame {
+public class TechnicalOfficerDashboard extends JFrame implements TechnicalOverviewPanel.TechnicalNavDelegate {
     private JPanel contentContainer;
     private CardLayout cardLayout;
 
@@ -27,7 +29,7 @@ public class TechnicalOfficerDashboard extends JFrame {
     private MedicalPanel medicalPanel;
     private TechnicalTimetablePanel timetablePanel;
     private TechnicalNoticePanel noticePanel;
-    private JPanel overviewPanel;
+    private TechnicalOverviewPanel overviewPanel;
 
     private JButton btnOverview;
     private JButton btnProfile;
@@ -35,6 +37,9 @@ public class TechnicalOfficerDashboard extends JFrame {
     private JButton btnMedical;
     private JButton btnTimetable;
     private JButton btnNotices;
+    private JButton btnLogout;
+
+    private DashboardHeaderPanel headerPanel;
 
     public TechnicalOfficerDashboard() {
         initComponents();
@@ -42,93 +47,27 @@ public class TechnicalOfficerDashboard extends JFrame {
 
     private void initComponents() {
         User cur = SessionManager.getCurrentUser();
-        setTitle(cur != null ? cur.getDashboardTitle() : "Technical Operations Portal");
+        setTitle(cur != null ? cur.getDashboardTitle() : "Faculty of Technology - Technical Operations Portal");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1220, 760);
+        setSize(1320, 800);
+        setMinimumSize(new Dimension(1100, 700));
         setLocationRelativeTo(null);
 
         JPanel root = new JPanel(new BorderLayout());
         root.setBackground(ModernTheme.BG_MAIN);
 
-        // Sidebar
-        JPanel sidebar = new JPanel();
-        sidebar.setPreferredSize(new Dimension(240, 760));
-        sidebar.setBackground(ModernTheme.BG_SIDEBAR);
-        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBorder(new EmptyBorder(25, 15, 25, 15));
+        // Sidebar (Stationary, zero scrolling)
+        JPanel sidebar = createSidebar();
 
-        JLabel bTitle = new JLabel("FOT - AMS");
-        bTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        bTitle.setForeground(Color.WHITE);
-        bTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // Common Header
+        headerPanel = new DashboardHeaderPanel(cur, () -> switchCard("PROFILE", btnProfile));
 
-        JLabel bSub = new JLabel("University of Ruhuna");
-        bSub.setFont(ModernTheme.FONT_SMALL);
-        bSub.setForeground(new Color(148, 163, 184));
-        bSub.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JLabel rLabel = new JLabel("Role: Technical Officer");
-        rLabel.setFont(ModernTheme.FONT_SMALL);
-        rLabel.setForeground(new Color(52, 211, 153));
-        rLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        sidebar.add(bTitle);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 4)));
-        sidebar.add(bSub);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 6)));
-        sidebar.add(rLabel);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 25)));
-
-        btnOverview = createNavButton("Operations Overview");
-        btnProfile = createNavButton("Officer Profile");
-        btnAttendance = createNavButton("Attendance (15 Sessions)");
-        btnMedical = createNavButton("Medical Records");
-        btnTimetable = createNavButton("Lab & Dept Timetable");
-        btnNotices = createNavButton("Faculty Notices");
-
-        sidebar.add(btnOverview);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 8)));
-        sidebar.add(btnProfile);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 8)));
-        sidebar.add(btnAttendance);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 8)));
-        sidebar.add(btnMedical);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 8)));
-        sidebar.add(btnTimetable);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 8)));
-        sidebar.add(btnNotices);
-
-        sidebar.add(Box.createVerticalGlue());
-
-        JButton btnLogout = ModernTheme.createDangerButton("Logout from Portal");
-        btnLogout.setAlignmentX(Component.CENTER_ALIGNMENT);
-        btnLogout.setMaximumSize(new Dimension(210, 38));
-        btnLogout.addActionListener(e -> handleLogout());
-        sidebar.add(btnLogout);
-
-        // Header
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(Color.WHITE);
-        header.setPreferredSize(new Dimension(980, 60));
-        header.setBorder(new CompoundBorder(new LineBorder(ModernTheme.BORDER, 1), new EmptyBorder(10, 25, 10, 25)));
-
-        JLabel welcome = new JLabel("Welcome, " + (cur != null ? cur.getFullName() : "Technical Officer"));
-        welcome.setFont(ModernTheme.FONT_SUBTITLE);
-        welcome.setForeground(ModernTheme.TEXT_DARK);
-
-        JLabel dateLbl = new JLabel(DateUtil.formatDisplayDate(new Date()));
-        dateLbl.setFont(ModernTheme.FONT_REGULAR);
-        dateLbl.setForeground(ModernTheme.TEXT_MUTED);
-
-        header.add(welcome, BorderLayout.WEST);
-        header.add(dateLbl, BorderLayout.EAST);
-
-        // Center Cards
+        // Center Content Container (CardLayout)
         cardLayout = new CardLayout();
         contentContainer = new JPanel(cardLayout);
         contentContainer.setBackground(ModernTheme.BG_MAIN);
 
-        overviewPanel = createOverviewPanel();
+        overviewPanel = new TechnicalOverviewPanel(this);
         profilePanel = new TechnicalProfilePanel();
         attendancePanel = new AttendancePanel();
         medicalPanel = new MedicalPanel();
@@ -143,12 +82,16 @@ public class TechnicalOfficerDashboard extends JFrame {
         contentContainer.add(noticePanel, "NOTICES");
 
         root.add(sidebar, BorderLayout.WEST);
-        root.add(header, BorderLayout.NORTH);
+        root.add(headerPanel, BorderLayout.NORTH);
         root.add(contentContainer, BorderLayout.CENTER);
 
         setContentPane(root);
 
-        btnOverview.addActionListener(e -> switchCard("OVERVIEW", btnOverview));
+        // Nav listeners
+        btnOverview.addActionListener(e -> {
+            overviewPanel.loadData();
+            switchCard("OVERVIEW", btnOverview);
+        });
         btnProfile.addActionListener(e -> {
             profilePanel.loadLatestProfileFromDatabase();
             switchCard("PROFILE", btnProfile);
@@ -166,38 +109,169 @@ public class TechnicalOfficerDashboard extends JFrame {
             noticePanel.loadNotices();
             switchCard("NOTICES", btnNotices);
         });
+        btnLogout.addActionListener(e -> handleLogout());
 
         setActiveNav(btnOverview);
     }
 
-    private JButton createNavButton(String text) {
-        JButton btn = new JButton(text);
+    private JPanel createSidebar() {
+        JPanel sidebar = new JPanel();
+        sidebar.setPreferredSize(new Dimension(245, 800));
+        sidebar.setBackground(ModernTheme.NAVY);
+        sidebar.setLayout(new BorderLayout());
+
+        // Menu items container (Stationary - no scrollbars)
+        JPanel menuContent = new JPanel();
+        menuContent.setLayout(new BoxLayout(menuContent, BoxLayout.Y_AXIS));
+        menuContent.setBackground(ModernTheme.NAVY);
+        menuContent.setBorder(new EmptyBorder(22, 14, 16, 14));
+
+        // Branding
+        JPanel brandPanel = new JPanel();
+        brandPanel.setLayout(new BoxLayout(brandPanel, BoxLayout.Y_AXIS));
+        brandPanel.setOpaque(false);
+        brandPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel brandTitle = new JLabel("FOT - AMS", ModernIcons.get("academic", 24, ModernTheme.ACCENT), SwingConstants.LEFT);
+        brandTitle.setFont(new Font(ModernTheme.getFontFamily(), Font.BOLD, 22));
+        brandTitle.setForeground(Color.WHITE);
+
+        JLabel brandSubtitle = new JLabel("University of Ruhuna");
+        brandSubtitle.setFont(ModernTheme.FONT_SMALL);
+        brandSubtitle.setForeground(new Color(148, 163, 184));
+
+        JLabel userRoleLabel = ModernTheme.createBadge("TECHNICAL OPERATIONS", new Color(6, 78, 59), new Color(110, 231, 183));
+
+        brandPanel.add(brandTitle);
+        brandPanel.add(Box.createRigidArea(new Dimension(0, 4)));
+        brandPanel.add(brandSubtitle);
+        brandPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+        brandPanel.add(userRoleLabel);
+        brandPanel.add(Box.createRigidArea(new Dimension(0, 24)));
+
+        menuContent.add(brandPanel);
+
+        // Section header
+        JLabel secLbl = new JLabel("OPERATIONS MENU");
+        secLbl.setFont(ModernTheme.FONT_CAPTION);
+        secLbl.setForeground(new Color(100, 116, 139));
+        secLbl.setBorder(new EmptyBorder(6, 8, 8, 0));
+        menuContent.add(secLbl);
+
+        btnOverview = createNavButton("Operations Overview", "dashboard");
+        btnProfile = createNavButton("Officer Profile", "profile");
+        btnAttendance = createNavButton("Attendance (15 Sessions)", "check");
+        btnMedical = createNavButton("Medical Records", "audit");
+        btnTimetable = createNavButton("Lab & Dept Timetable", "calendar");
+        btnNotices = createNavButton("Faculty Notices", "notices");
+
+        menuContent.add(btnOverview);
+        menuContent.add(Box.createRigidArea(new Dimension(0, 4)));
+        menuContent.add(btnProfile);
+        menuContent.add(Box.createRigidArea(new Dimension(0, 4)));
+        menuContent.add(btnAttendance);
+        menuContent.add(Box.createRigidArea(new Dimension(0, 4)));
+        menuContent.add(btnMedical);
+        menuContent.add(Box.createRigidArea(new Dimension(0, 4)));
+        menuContent.add(btnTimetable);
+        menuContent.add(Box.createRigidArea(new Dimension(0, 4)));
+        menuContent.add(btnNotices);
+
+        sidebar.add(menuContent, BorderLayout.CENTER);
+
+        // Fixed bottom logout
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.setBackground(ModernTheme.NAVY);
+        bottomPanel.setBorder(new EmptyBorder(12, 14, 16, 14));
+
+        btnLogout = new JButton("Logout from Portal", ModernIcons.get("logout", 16, new Color(252, 165, 165))) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground());
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        btnLogout.setContentAreaFilled(false);
+        btnLogout.setOpaque(false);
+        btnLogout.setFont(ModernTheme.FONT_BOLD);
+        btnLogout.setBackground(new Color(153, 27, 27));
+        btnLogout.setForeground(Color.WHITE);
+        btnLogout.setFocusPainted(false);
+        btnLogout.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnLogout.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
+        btnLogout.setMaximumSize(new Dimension(218, 42));
+
+        bottomPanel.add(btnLogout, BorderLayout.CENTER);
+        sidebar.add(bottomPanel, BorderLayout.SOUTH);
+
+        return sidebar;
+    }
+
+    private JButton createNavButton(String text, String iconName) {
+        JButton btn = new JButton(text, ModernIcons.get(iconName, 17, new Color(148, 163, 184))) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground());
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        btn.setContentAreaFilled(false);
+        btn.setOpaque(false);
         btn.setFont(ModernTheme.FONT_BOLD);
-        btn.setForeground(new Color(226, 232, 240));
-        btn.setBackground(ModernTheme.BG_SIDEBAR);
+        btn.setForeground(new Color(203, 213, 225));
+        btn.setBackground(ModernTheme.NAVY);
         btn.setFocusPainted(false);
-        btn.setBorder(new EmptyBorder(10, 15, 10, 15));
+        btn.setBorder(new EmptyBorder(10, 12, 10, 12));
         btn.setHorizontalAlignment(SwingConstants.LEFT);
+        btn.setIconTextGap(12);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setMaximumSize(new Dimension(210, 42));
-        btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btn.setMaximumSize(new Dimension(218, 38));
+        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        btn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if (btn.getBackground() != ModernTheme.BG_SIDEBAR_ACTIVE) {
+                    btn.setBackground(ModernTheme.BG_SIDEBAR_HOVER);
+                    btn.setForeground(Color.WHITE);
+                }
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (btn.getBackground() != ModernTheme.BG_SIDEBAR_ACTIVE) {
+                    btn.setBackground(ModernTheme.NAVY);
+                    btn.setForeground(new Color(203, 213, 225));
+                }
+            }
+        });
+
         return btn;
     }
 
     private void setActiveNav(JButton active) {
         JButton[] buttons = {btnOverview, btnProfile, btnAttendance, btnMedical, btnTimetable, btnNotices};
         for (JButton b : buttons) {
+            if (b == null) continue;
             if (b == active) {
                 b.setBackground(ModernTheme.BG_SIDEBAR_ACTIVE);
                 b.setForeground(Color.WHITE);
                 b.setBorder(new CompoundBorder(
-                    BorderFactory.createMatteBorder(0, 4, 0, 0, new Color(16, 185, 129)),
-                    new EmptyBorder(10, 11, 10, 15)
+                    BorderFactory.createMatteBorder(0, 4, 0, 0, new Color(52, 211, 153)),
+                    new EmptyBorder(10, 8, 10, 12)
                 ));
             } else {
-                b.setBackground(ModernTheme.BG_SIDEBAR);
+                b.setBackground(ModernTheme.NAVY);
                 b.setForeground(new Color(203, 213, 225));
-                b.setBorder(new EmptyBorder(10, 15, 10, 15));
+                b.setBorder(new EmptyBorder(10, 12, 10, 12));
             }
         }
     }
@@ -207,159 +281,30 @@ public class TechnicalOfficerDashboard extends JFrame {
         setActiveNav(btn);
     }
 
-    /**
-     * Creates a modern live date and time widget card.
-     */
-    private JPanel createDateTimeWidget() {
-        JPanel dateTimePanel = ModernTheme.createCardPanel();
-        dateTimePanel.setLayout(new BorderLayout(10, 5));
-        dateTimePanel.setBorder(new CompoundBorder(
-                new LineBorder(ModernTheme.BORDER, 1, true),
-                new EmptyBorder(12, 20, 12, 20)
-        ));
-
-        JLabel lblTitle = new JLabel("Date & Time:");
-        lblTitle.setFont(ModernTheme.FONT_SMALL);
-        lblTitle.setForeground(ModernTheme.TEXT_MUTED);
-        lblTitle.setHorizontalAlignment(SwingConstants.CENTER); // Centered title
-
-        JLabel lblDateTime = new JLabel();
-        lblDateTime.setFont(ModernTheme.FONT_SUBTITLE);
-        lblDateTime.setForeground(ModernTheme.PRIMARY);
-        lblDateTime.setHorizontalAlignment(SwingConstants.CENTER); // Centered live clock
-
-        // Live clock timer updating every 1 second
-        Timer timer = new Timer(1000, e -> {
-            String currentDateTime = java.time.LocalDateTime.now().format(
-                    java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy - hh:mm:ss a")
-            );
-            lblDateTime.setText(currentDateTime);
-        });
-        timer.start();
-
-        dateTimePanel.add(lblTitle, BorderLayout.NORTH);
-        dateTimePanel.add(lblDateTime, BorderLayout.CENTER);
-
-        return dateTimePanel;
-    }
-
-    private JPanel createOverviewPanel() {
-        JPanel panel = new JPanel(new BorderLayout(20, 20));
-        panel.setBackground(ModernTheme.BG_MAIN);
-        panel.setBorder(new EmptyBorder(25, 25, 25, 25));
-
-        // --- 1. Top Section: Date & Time Widget Card ---
-        JPanel dateTimeCard = ModernTheme.createCardPanel();
-        dateTimeCard.setLayout(new BorderLayout(10, 5));
-        dateTimeCard.setBorder(new CompoundBorder(
-                new LineBorder(ModernTheme.BORDER, 1, true),
-                new EmptyBorder(12, 20, 12, 20)
-        ));
-
-        JLabel lblTimeTitle = new JLabel("Current System Date & Time:");
-        lblTimeTitle.setFont(ModernTheme.FONT_SMALL);
-        lblTimeTitle.setForeground(ModernTheme.TEXT_MUTED);
-
-        JLabel lblDateTime = new JLabel();
-        lblDateTime.setFont(ModernTheme.FONT_SUBTITLE);
-        lblDateTime.setForeground(ModernTheme.PRIMARY);
-
-        // Live clock timer updating every 1 second
-        Timer timer = new Timer(1000, e -> {
-            String currentDateTime = java.time.LocalDateTime.now().format(
-                    java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy - hh:mm:ss a")
-            );
-            lblDateTime.setText(currentDateTime);
-        });
-        timer.start();
-
-        dateTimeCard.add(lblTimeTitle, BorderLayout.NORTH);
-        dateTimeCard.add(lblDateTime, BorderLayout.CENTER);
-
-        // --- 2. Stats Row (Sessions, Medicals, Threshold) ---
-        JPanel statsRow = new JPanel(new GridLayout(1, 3, 15, 0));
-        statsRow.setOpaque(false);
-
-        MedicalDAO mDAO = new MedicalDAO();
-        int medCount = mDAO.getAllMedicals().size();
-
-        statsRow.add(createStatCard("Sessions Per Module", "15 Theory + 15 Practical", ModernTheme.PRIMARY));
-        statsRow.add(createStatCard("Medical Certificates Logged", String.valueOf(medCount), ModernTheme.WARNING));
-        statsRow.add(createStatCard("Attendance Eligibility", "\u2265 80% Threshold", ModernTheme.SUCCESS));
-
-        // Combine Date/Time Card and Stats Row into a single vertical NORTH panel
-        JPanel topContainer = new JPanel();
-        topContainer.setLayout(new BoxLayout(topContainer, BoxLayout.Y_AXIS));
-        topContainer.setOpaque(false);
-
-        topContainer.add(dateTimeCard);
-        topContainer.add(Box.createRigidArea(new Dimension(0, 15))); // Spacing between date card and stats row
-        topContainer.add(statsRow);
-
-        // --- 3. Center Card (Operational Responsibilities) ---
-        JPanel card = ModernTheme.createCardPanel();
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBorder(new EmptyBorder(20, 20, 20, 20)); // Added consistent padding inside the card
-
-        JLabel title = new JLabel("Technical Officer Operational Responsibilities");
-        title.setFont(ModernTheme.FONT_SUBTITLE);
-        title.setForeground(ModernTheme.PRIMARY);
-        title.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JTextArea text = new JTextArea(
-                "• Attendance Recording: Record theory and practical attendance session by session (1 to 15) for student batches.\n\n" +
-                        "• Attendance Summary & Scenarios: Analyze attendance percentages and verify compliance across the 5 mandatory scenarios:\n" +
-                        "   1. More than 80%\n" +
-                        "   2. Exactly 80%\n" +
-                        "   3. Less than 80% without medicals\n" +
-                        "   4. More than 80% with approved medicals\n" +
-                        "   5. Less than 80% with approved medicals\n\n" +
-                        "• Medical Records: Maintain student medical certificates and verify approval status (APPROVED / NOT_APPROVED) by the University Medical Officer.\n\n" +
-                        "• Laboratory Timetables: Inspect department timetable allocations to prepare lab workstations and apparatus."
-        );
-        text.setFont(ModernTheme.FONT_REGULAR);
-        text.setEditable(false);
-        text.setOpaque(false);
-        text.setWrapStyleWord(true);
-        text.setLineWrap(true);
-
-        card.add(title);
-        card.add(Box.createRigidArea(new Dimension(0, 15))); // Spacing between title and text area
-        card.add(text);
-
-        // Add components to the main panel layout
-        panel.add(topContainer, BorderLayout.NORTH);
-        panel.add(card, BorderLayout.CENTER);
-
-        return panel;
-    }
-
-    private JPanel createStatCard(String title, String value, Color color) {
-        JPanel c = ModernTheme.createCardPanel();
-        c.setLayout(new BorderLayout());
-        c.setBorder(new CompoundBorder(
-            BorderFactory.createMatteBorder(0, 5, 0, 0, color),
-            new EmptyBorder(15, 15, 15, 15)
-        ));
-        JLabel t = new JLabel(title);
-        t.setFont(ModernTheme.FONT_BOLD);
-        t.setForeground(ModernTheme.TEXT_MUTED);
-
-        JLabel v = new JLabel(value);
-        v.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        v.setForeground(ModernTheme.TEXT_DARK);
-
-        c.add(t, BorderLayout.NORTH);
-        c.add(v, BorderLayout.CENTER);
-        return c;
+    @Override
+    public void navigateTo(String tabKey) {
+        switch (tabKey) {
+            case "ATTENDANCE":
+                switchCard("ATTENDANCE", btnAttendance);
+                break;
+            case "MEDICAL":
+                medicalPanel.loadMedicals();
+                switchCard("MEDICAL", btnMedical);
+                break;
+            case "TIMETABLE":
+                timetablePanel.loadTimetable();
+                switchCard("TIMETABLE", btnTimetable);
+                break;
+        }
     }
 
     private void handleLogout() {
         int confirm = JOptionPane.showConfirmDialog(
             this,
-            "Are you sure you want to sign out from the Technical portal?",
+            "Are you sure you want to sign out from the Technical Operations portal?",
             "Confirm Logout",
-            JOptionPane.YES_NO_OPTION
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE
         );
         if (confirm == JOptionPane.YES_OPTION) {
             SessionManager.logout();

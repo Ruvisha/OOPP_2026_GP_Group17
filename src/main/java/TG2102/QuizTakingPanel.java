@@ -132,7 +132,10 @@ public class QuizTakingPanel extends JPanel {
         User cur = SessionManager.getCurrentUser();
         if (cur == null) return;
 
-        List<Course> list = assessmentService.getEnrolledCoursesForStudent(cur.getUserId());
+        List<Course> list = java.util.Collections.emptyList();
+        try {
+            list = assessmentService.getEnrolledCoursesForStudent(cur.getUserId());
+        } catch (Exception ignored) {}
         cmbCourseFilter.addItem(new CourseOption(0, "All Registered Courses (" + list.size() + ")"));
         for (Course c : list) {
             cmbCourseFilter.addItem(new CourseOption(c.getCourseId(), c.getCourseCode() + " - " + c.getCourseName()));
@@ -151,7 +154,8 @@ public class QuizTakingPanel extends JPanel {
         if (cur == null) return;
 
         CourseOption sel = (CourseOption) cmbCourseFilter.getSelectedItem();
-        List<Course> courses;
+        List<Course> courses = java.util.Collections.emptyList();
+        try {
         if (sel == null || sel.id == 0) {
             courses = assessmentService.getEnrolledCoursesForStudent(cur.getUserId());
         } else {
@@ -159,6 +163,7 @@ public class QuizTakingPanel extends JPanel {
             c.setCourseId(sel.id);
             courses = List.of(c);
         }
+        } catch (Exception ignored) {}
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         long now = System.currentTimeMillis();

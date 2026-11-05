@@ -250,6 +250,23 @@ public class AttendancePanel extends JPanel {
         summaryTable = new JTable(summaryTableModel);
         ModernTheme.styleTable(summaryTable);
 
+        // Highlight eligibility and scenario (Column 8 & 9)
+        summaryTable.getColumnModel().getColumn(9).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+                String valStr = value != null ? value.toString() : "";
+                setFont(ModernTheme.FONT_BOLD);
+                setHorizontalAlignment(SwingConstants.CENTER);
+                if ("ELIGIBLE".equalsIgnoreCase(valStr)) {
+                    setForeground(new Color(22, 163, 74));
+                } else {
+                    setForeground(new Color(220, 38, 38));
+                }
+                return c;
+            }
+        });
+
         JPanel tablePanel = new JPanel(new BorderLayout());
         tablePanel.setBackground(Color.WHITE);
         tablePanel.setBorder(new LineBorder(ModernTheme.BORDER, 1));
@@ -329,6 +346,29 @@ public class AttendancePanel extends JPanel {
         indivTable = new JTable(indivTableModel);
         ModernTheme.styleTable(indivTable);
 
+        // Status indicator (Column 4)
+        indivTable.getColumnModel().getColumn(4).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+                String valStr = value != null ? value.toString().toUpperCase() : "";
+                setFont(ModernTheme.FONT_BOLD);
+                setHorizontalAlignment(SwingConstants.CENTER);
+                if (valStr.contains("PRESENT")) {
+                    setForeground(new Color(22, 163, 74));
+                } else if (valStr.contains("ABSENT")) {
+                    setForeground(new Color(220, 38, 38));
+                } else if (valStr.contains("APPROVED")) {
+                    setForeground(new Color(37, 99, 235));
+                } else if (valStr.contains("PENDING")) {
+                    setForeground(new Color(217, 119, 6));
+                } else {
+                    setForeground(ModernTheme.TEXT_DARK);
+                }
+                return c;
+            }
+        });
+
         JPanel centerPanel = new JPanel(new BorderLayout(10, 10));
         centerPanel.setOpaque(false);
         centerPanel.add(card, BorderLayout.NORTH);
@@ -345,7 +385,12 @@ public class AttendancePanel extends JPanel {
         cmbSummaryCourse.removeAllItems();
         cmbIndivCourse.removeAllItems();
 
-        List<Course> list = courseDAO.getAllCourses();
+        List<Course> list = java.util.Collections.emptyList();
+        try {
+            list = courseDAO.getAllCourses();
+        } catch (Exception e) {
+            System.err.println("[AttendancePanel] Load courses note: " + e.getMessage());
+        }
         for (Course c : list) {
             CourseComboItem item = new CourseComboItem(c.getCourseId(), c.getCourseCode(), c.getCourseName());
             cmbRecordCourse.addItem(item);

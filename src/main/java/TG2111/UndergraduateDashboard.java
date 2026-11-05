@@ -1,25 +1,26 @@
 package com.fot.ams.ui.undergraduate;
 
-import com.fot.ams.dao.CourseEnrollmentDAO;
 import com.fot.ams.model.Undergraduate;
 import com.fot.ams.model.User;
-import com.fot.ams.service.GPAService;
 import com.fot.ams.ui.LoginFrame;
+import com.fot.ams.ui.common.DashboardHeaderPanel;
+import com.fot.ams.ui.common.ModernIcons;
 import com.fot.ams.ui.common.ModernTheme;
-import com.fot.ams.util.DateUtil;
 import com.fot.ams.util.SessionManager;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.util.Date;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.RoundRectangle2D;
 
 /**
- * Main Undergraduate Student Academic Portal Frame.
+ * Modern Undergraduate Student Academic Portal Frame.
+ * University of Ruhuna - Group 17.
  */
-public class UndergraduateDashboard extends JFrame {
+public class UndergraduateDashboard extends JFrame implements UndergraduateOverviewPanel.StudentNavDelegate {
     private JPanel contentContainer;
     private CardLayout cardLayout;
 
@@ -30,7 +31,7 @@ public class UndergraduateDashboard extends JFrame {
     private GradeViewPanel gradePanel;
     private TimetableViewPanel timetablePanel;
     private NoticeViewPanel noticePanel;
-    private JPanel overviewPanel;
+    private UndergraduateOverviewPanel overviewPanel;
 
     private JButton btnOverview;
     private JButton btnProfile;
@@ -40,6 +41,9 @@ public class UndergraduateDashboard extends JFrame {
     private JButton btnGrades;
     private JButton btnTimetable;
     private JButton btnNotices;
+    private JButton btnLogout;
+
+    private DashboardHeaderPanel headerPanel;
 
     public UndergraduateDashboard() {
         initComponents();
@@ -47,105 +51,27 @@ public class UndergraduateDashboard extends JFrame {
 
     private void initComponents() {
         User cur = SessionManager.getCurrentUser();
-        setTitle(cur != null ? cur.getDashboardTitle() : "Student Academic Portal");
+        setTitle(cur != null ? cur.getDashboardTitle() : "Faculty of Technology - Student Academic Portal");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1240, 780);
+        setSize(1320, 800);
+        setMinimumSize(new Dimension(1100, 700));
         setLocationRelativeTo(null);
 
         JPanel root = new JPanel(new BorderLayout());
         root.setBackground(ModernTheme.BG_MAIN);
 
-        // Sidebar
-        JPanel sidebar = new JPanel();
-        sidebar.setPreferredSize(new Dimension(250, 780));
-        sidebar.setBackground(ModernTheme.BG_SIDEBAR);
-        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBorder(new EmptyBorder(25, 15, 25, 15));
+        // Sidebar (Stationary, zero scrolling)
+        JPanel sidebar = createSidebar();
 
-        JLabel bTitle = new JLabel("FOT - AMS");
-        bTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        bTitle.setForeground(Color.WHITE);
-        bTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JLabel bSub = new JLabel("University of Ruhuna");
-        bSub.setFont(ModernTheme.FONT_SMALL);
-        bSub.setForeground(new Color(148, 163, 184));
-        bSub.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        String regNo = (cur instanceof Undergraduate ug) ? ug.getStudentRegNo() : "";
-        JLabel rLabel = new JLabel("Student: " + regNo);
-        rLabel.setFont(ModernTheme.FONT_SMALL);
-        rLabel.setForeground(new Color(147, 197, 253));
-        rLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        sidebar.add(bTitle);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 4)));
-        sidebar.add(bSub);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 6)));
-        sidebar.add(rLabel);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 20)));
-
-        btnOverview = createNavButton("Portal Overview");
-        btnProfile = createNavButton("Profile & Contact");
-        btnCourses = createNavButton("Enrolled Courses");
-        btnAttendance = createNavButton("Attendance Tracking");
-        btnMedical = createNavButton("Medical Records");
-        btnGrades = createNavButton("Grades & GPA");
-        btnTimetable = createNavButton("My Timetable");
-        btnNotices = createNavButton("Faculty Bulletins");
-
-        sidebar.add(btnOverview);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 6)));
-        sidebar.add(btnProfile);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 6)));
-        sidebar.add(btnCourses);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 6)));
-        sidebar.add(btnAttendance);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 6)));
-        sidebar.add(btnMedical);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 6)));
-        sidebar.add(btnGrades);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 6)));
-        sidebar.add(btnTimetable);
-        sidebar.add(Box.createRigidArea(new Dimension(0, 6)));
-        sidebar.add(btnNotices);
-
-        sidebar.add(Box.createVerticalGlue());
-
-        JButton btnLogout = ModernTheme.createDangerButton("Sign Out");
-        btnLogout.setAlignmentX(Component.CENTER_ALIGNMENT);
-        btnLogout.setMaximumSize(new Dimension(220, 38));
-        btnLogout.addActionListener(e -> handleLogout());
-        sidebar.add(btnLogout);
-
-        // Header
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(Color.WHITE);
-        header.setPreferredSize(new Dimension(990, 60));
-        header.setBorder(new CompoundBorder(new LineBorder(ModernTheme.BORDER, 1), new EmptyBorder(10, 25, 10, 25)));
-
-        String studentInfo = (cur != null ? cur.getFullName() : "Undergraduate");
-        if (cur instanceof Undergraduate ug && (ug.isRepeat() || ug.isBatchMissed())) {
-            studentInfo += " [" + ug.getStudentType() + " STUDENT]";
-        }
-
-        JLabel welcome = new JLabel("Welcome, " + studentInfo);
-        welcome.setFont(ModernTheme.FONT_SUBTITLE);
-        welcome.setForeground(ModernTheme.TEXT_DARK);
-
-        JLabel dateLbl = new JLabel(DateUtil.formatDisplayDate(new Date()));
-        dateLbl.setFont(ModernTheme.FONT_REGULAR);
-        dateLbl.setForeground(ModernTheme.TEXT_MUTED);
-
-        header.add(welcome, BorderLayout.WEST);
-        header.add(dateLbl, BorderLayout.EAST);
+        // Common Header
+        headerPanel = new DashboardHeaderPanel(cur, () -> switchCard("PROFILE", btnProfile));
 
         // Center Cards
         cardLayout = new CardLayout();
         contentContainer = new JPanel(cardLayout);
         contentContainer.setBackground(ModernTheme.BG_MAIN);
 
-        overviewPanel = createOverviewPanel();
+        overviewPanel = new UndergraduateOverviewPanel(this);
         profilePanel = new UndergraduateProfilePanel();
         coursePanel = new CourseViewPanel();
         attendancePanel = new AttendanceViewPanel();
@@ -164,12 +90,16 @@ public class UndergraduateDashboard extends JFrame {
         contentContainer.add(noticePanel, "NOTICES");
 
         root.add(sidebar, BorderLayout.WEST);
-        root.add(header, BorderLayout.NORTH);
+        root.add(headerPanel, BorderLayout.NORTH);
         root.add(contentContainer, BorderLayout.CENTER);
 
         setContentPane(root);
 
-        btnOverview.addActionListener(e -> switchCard("OVERVIEW", btnOverview));
+        // Nav Handlers
+        btnOverview.addActionListener(e -> {
+            overviewPanel.loadData();
+            switchCard("OVERVIEW", btnOverview);
+        });
         btnProfile.addActionListener(e -> {
             profilePanel.loadProfileData();
             switchCard("PROFILE", btnProfile);
@@ -198,38 +128,175 @@ public class UndergraduateDashboard extends JFrame {
             noticePanel.loadNotices();
             switchCard("NOTICES", btnNotices);
         });
+        btnLogout.addActionListener(e -> handleLogout());
 
         setActiveNav(btnOverview);
     }
 
-    private JButton createNavButton(String text) {
-        JButton btn = new JButton(text);
+    private JPanel createSidebar() {
+        JPanel sidebar = new JPanel();
+        sidebar.setPreferredSize(new Dimension(245, 800));
+        sidebar.setBackground(ModernTheme.NAVY);
+        sidebar.setLayout(new BorderLayout());
+
+        JPanel menuContent = new JPanel();
+        menuContent.setLayout(new BoxLayout(menuContent, BoxLayout.Y_AXIS));
+        menuContent.setBackground(ModernTheme.NAVY);
+        menuContent.setBorder(new EmptyBorder(20, 14, 16, 14));
+
+        // Branding
+        JPanel brandPanel = new JPanel();
+        brandPanel.setLayout(new BoxLayout(brandPanel, BoxLayout.Y_AXIS));
+        brandPanel.setOpaque(false);
+        brandPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel brandTitle = new JLabel("FOT - AMS", ModernIcons.get("academic", 24, ModernTheme.ACCENT), SwingConstants.LEFT);
+        brandTitle.setFont(new Font(ModernTheme.getFontFamily(), Font.BOLD, 22));
+        brandTitle.setForeground(Color.WHITE);
+
+        JLabel brandSubtitle = new JLabel("University of Ruhuna");
+        brandSubtitle.setFont(ModernTheme.FONT_SMALL);
+        brandSubtitle.setForeground(new Color(148, 163, 184));
+
+        User cur = SessionManager.getCurrentUser();
+        String regNo = (cur instanceof Undergraduate ug) ? ug.getStudentRegNo() : "TG/2024/0000";
+        JLabel userRoleLabel = ModernTheme.createBadge("STUDENT: " + regNo, new Color(30, 58, 138), new Color(147, 197, 253));
+
+        brandPanel.add(brandTitle);
+        brandPanel.add(Box.createRigidArea(new Dimension(0, 4)));
+        brandPanel.add(brandSubtitle);
+        brandPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+        brandPanel.add(userRoleLabel);
+        brandPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        menuContent.add(brandPanel);
+
+        JLabel secLbl = new JLabel("STUDENT PORTAL");
+        secLbl.setFont(ModernTheme.FONT_CAPTION);
+        secLbl.setForeground(new Color(100, 116, 139));
+        secLbl.setBorder(new EmptyBorder(4, 8, 6, 0));
+        menuContent.add(secLbl);
+
+        btnOverview = createNavButton("Portal Overview", "dashboard");
+        btnProfile = createNavButton("Profile & Contact", "profile");
+        btnCourses = createNavButton("Enrolled Courses", "courses");
+        btnAttendance = createNavButton("Attendance Tracking", "check");
+        btnMedical = createNavButton("Medical Records", "audit");
+        btnGrades = createNavButton("Grades & GPA", "marks");
+        btnTimetable = createNavButton("My Timetable", "calendar");
+        btnNotices = createNavButton("Faculty Bulletins", "notices");
+
+        menuContent.add(btnOverview);
+        menuContent.add(Box.createRigidArea(new Dimension(0, 3)));
+        menuContent.add(btnProfile);
+        menuContent.add(Box.createRigidArea(new Dimension(0, 3)));
+        menuContent.add(btnCourses);
+        menuContent.add(Box.createRigidArea(new Dimension(0, 3)));
+        menuContent.add(btnAttendance);
+        menuContent.add(Box.createRigidArea(new Dimension(0, 3)));
+        menuContent.add(btnMedical);
+        menuContent.add(Box.createRigidArea(new Dimension(0, 3)));
+        menuContent.add(btnGrades);
+        menuContent.add(Box.createRigidArea(new Dimension(0, 3)));
+        menuContent.add(btnTimetable);
+        menuContent.add(Box.createRigidArea(new Dimension(0, 3)));
+        menuContent.add(btnNotices);
+
+        sidebar.add(menuContent, BorderLayout.CENTER);
+
+        // Pinned bottom logout
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.setBackground(ModernTheme.NAVY);
+        bottomPanel.setBorder(new EmptyBorder(12, 14, 16, 14));
+
+        btnLogout = new JButton("Sign Out", ModernIcons.get("logout", 16, new Color(252, 165, 165))) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground());
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        btnLogout.setContentAreaFilled(false);
+        btnLogout.setOpaque(false);
+        btnLogout.setFont(ModernTheme.FONT_BOLD);
+        btnLogout.setBackground(new Color(153, 27, 27));
+        btnLogout.setForeground(Color.WHITE);
+        btnLogout.setFocusPainted(false);
+        btnLogout.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnLogout.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
+        btnLogout.setMaximumSize(new Dimension(218, 42));
+
+        bottomPanel.add(btnLogout, BorderLayout.CENTER);
+        sidebar.add(bottomPanel, BorderLayout.SOUTH);
+
+        return sidebar;
+    }
+
+    private JButton createNavButton(String text, String iconName) {
+        JButton btn = new JButton(text, ModernIcons.get(iconName, 17, new Color(148, 163, 184))) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground());
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 8, 8));
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        btn.setContentAreaFilled(false);
+        btn.setOpaque(false);
         btn.setFont(ModernTheme.FONT_BOLD);
-        btn.setForeground(new Color(226, 232, 240));
-        btn.setBackground(ModernTheme.BG_SIDEBAR);
+        btn.setForeground(new Color(203, 213, 225));
+        btn.setBackground(ModernTheme.NAVY);
         btn.setFocusPainted(false);
-        btn.setBorder(new EmptyBorder(8, 14, 8, 14));
+        btn.setBorder(new EmptyBorder(8, 12, 8, 12));
         btn.setHorizontalAlignment(SwingConstants.LEFT);
+        btn.setIconTextGap(12);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setMaximumSize(new Dimension(220, 38));
-        btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btn.setMaximumSize(new Dimension(218, 36));
+        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        btn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if (btn.getBackground() != ModernTheme.BG_SIDEBAR_ACTIVE) {
+                    btn.setBackground(ModernTheme.BG_SIDEBAR_HOVER);
+                    btn.setForeground(Color.WHITE);
+                }
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (btn.getBackground() != ModernTheme.BG_SIDEBAR_ACTIVE) {
+                    btn.setBackground(ModernTheme.NAVY);
+                    btn.setForeground(new Color(203, 213, 225));
+                }
+            }
+        });
+
         return btn;
     }
 
     private void setActiveNav(JButton active) {
         JButton[] buttons = {btnOverview, btnProfile, btnCourses, btnAttendance, btnMedical, btnGrades, btnTimetable, btnNotices};
         for (JButton b : buttons) {
+            if (b == null) continue;
             if (b == active) {
                 b.setBackground(ModernTheme.BG_SIDEBAR_ACTIVE);
                 b.setForeground(Color.WHITE);
                 b.setBorder(new CompoundBorder(
                     BorderFactory.createMatteBorder(0, 4, 0, 0, ModernTheme.ACCENT),
-                    new EmptyBorder(8, 10, 8, 14)
+                    new EmptyBorder(8, 8, 8, 12)
                 ));
             } else {
-                b.setBackground(ModernTheme.BG_SIDEBAR);
+                b.setBackground(ModernTheme.NAVY);
                 b.setForeground(new Color(203, 213, 225));
-                b.setBorder(new EmptyBorder(8, 14, 8, 14));
+                b.setBorder(new EmptyBorder(8, 12, 8, 12));
             }
         }
     }
@@ -239,80 +306,26 @@ public class UndergraduateDashboard extends JFrame {
         setActiveNav(btn);
     }
 
-    private JPanel createOverviewPanel() {
-        JPanel panel = new JPanel(new BorderLayout(20, 20));
-        panel.setBackground(ModernTheme.BG_MAIN);
-        panel.setBorder(new EmptyBorder(25, 25, 25, 25));
-
-        User cur = SessionManager.getCurrentUser();
-        int enrolledCount = 0;
-        double cgpa = 0.0;
-        String standing = "Good Standing";
-
-        if (cur != null) {
-            enrolledCount = new CourseEnrollmentDAO().getEnrollmentsByStudent(cur.getUserId()).size();
-            GPAService gpaService = new GPAService();
-            cgpa = gpaService.calculateCgpaForStudent(cur.getUserId());
-            standing = gpaService.getClassification(cgpa);
+    @Override
+    public void navigateTo(String tabKey) {
+        switch (tabKey) {
+            case "COURSES":
+                coursePanel.loadEnrolledCourses();
+                switchCard("COURSES", btnCourses);
+                break;
+            case "ATTENDANCE":
+                attendancePanel.loadAttendanceDetails();
+                switchCard("ATTENDANCE", btnAttendance);
+                break;
+            case "GRADES":
+                gradePanel.loadStudentGrades();
+                switchCard("GRADES", btnGrades);
+                break;
+            case "MEDICAL":
+                medicalPanel.loadStudentMedicals();
+                switchCard("MEDICAL", btnMedical);
+                break;
         }
-
-        JPanel statsRow = new JPanel(new GridLayout(1, 4, 15, 0));
-        statsRow.setOpaque(false);
-
-        statsRow.add(createStatCard("Enrolled Modules", String.valueOf(enrolledCount), ModernTheme.PRIMARY));
-        statsRow.add(createStatCard("Current CGPA", cgpa > 0 ? String.format("%.2f", cgpa) : "N/A", ModernTheme.SUCCESS));
-        statsRow.add(createStatCard("Attendance Target", "\u2265 80% Required", ModernTheme.WARNING));
-        statsRow.add(createStatCard("Academic Standing", standing, new Color(79, 70, 229)));
-
-        JPanel card = ModernTheme.createCardPanel();
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-
-        JLabel title = new JLabel("Academic Regulations & Student Rights (University of Ruhuna)");
-        title.setFont(ModernTheme.FONT_SUBTITLE);
-        title.setForeground(ModernTheme.PRIMARY);
-
-        JTextArea text = new JTextArea(
-            "\n• Course Materials: Access study guides, presentations, and lab sheets uploaded by course lecturers.\n\n" +
-            "• Attendance Compliance (15 Sessions):\n" +
-            "  You must maintain at least 80% attendance in theory and practical sessions to be eligible to sit for semester examinations.\n" +
-            "  Approved medical certificates can excuse absences and raise your effective attendance rate.\n\n" +
-            "• Continuous Assessment (CA) Criterion:\n" +
-            "  You must score \u2265 40% in CA marks (Quizzes, Assignments, Mid Exams) to qualify for final exams.\n\n" +
-            "• Examination Grading & Repeat Policies:\n" +
-            "  Grades are awarded based on UGC Commission Circular No. 12-2024. Repeat courses are capped at grade C (2.00 GP)."
-        );
-        text.setFont(ModernTheme.FONT_REGULAR);
-        text.setEditable(false);
-        text.setOpaque(false);
-        text.setWrapStyleWord(true);
-        text.setLineWrap(true);
-
-        card.add(title);
-        card.add(text);
-
-        panel.add(statsRow, BorderLayout.NORTH);
-        panel.add(card, BorderLayout.CENTER);
-        return panel;
-    }
-
-    private JPanel createStatCard(String title, String value, Color color) {
-        JPanel c = ModernTheme.createCardPanel();
-        c.setLayout(new BorderLayout());
-        c.setBorder(new CompoundBorder(
-            BorderFactory.createMatteBorder(0, 5, 0, 0, color),
-            new EmptyBorder(12, 15, 12, 15)
-        ));
-        JLabel t = new JLabel(title);
-        t.setFont(ModernTheme.FONT_BOLD);
-        t.setForeground(ModernTheme.TEXT_MUTED);
-
-        JLabel v = new JLabel(value);
-        v.setFont(new Font("Segoe UI", Font.BOLD, 19));
-        v.setForeground(ModernTheme.TEXT_DARK);
-
-        c.add(t, BorderLayout.NORTH);
-        c.add(v, BorderLayout.CENTER);
-        return c;
     }
 
     private void handleLogout() {
@@ -320,7 +333,8 @@ public class UndergraduateDashboard extends JFrame {
             this,
             "Are you sure you want to sign out from the Student portal?",
             "Confirm Logout",
-            JOptionPane.YES_NO_OPTION
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE
         );
         if (confirm == JOptionPane.YES_OPTION) {
             SessionManager.logout();

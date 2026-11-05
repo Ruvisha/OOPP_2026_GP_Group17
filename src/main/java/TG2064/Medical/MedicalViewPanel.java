@@ -189,7 +189,10 @@ public class MedicalViewPanel extends JPanel {
         User cur = SessionManager.getCurrentUser();
         if (cur == null) return;
 
-        List<Medical> list = medicalService.getMedicalsByStudent(cur.getUserId());
+        List<Medical> list = java.util.Collections.emptyList();
+        try {
+            list = medicalService.getMedicalsByStudent(cur.getUserId());
+        } catch (Exception ignored) {}
         for (Medical m : list) {
             tableModel.addRow(new Object[]{
                     m.getMedicalId(),

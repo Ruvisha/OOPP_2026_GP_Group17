@@ -290,7 +290,10 @@ public class CourseMaterialPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Please log in as a lecturer to manage course materials.", "Login Required", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        List<Course> courses = courseDAO.getCoursesByLecturer(current.getUserId());
+        List<Course> courses = java.util.Collections.emptyList();
+        try {
+            courses = courseDAO.getCoursesByLecturer(current.getUserId());
+        } catch (Exception ignored) {}
         for (Course c : courses) {
             CourseFilterItem item = new CourseFilterItem(c.getCourseId(), c.getCourseCode() + " - " + c.getCourseName());
             cmbCourseFilter.addItem(item);
@@ -300,11 +303,13 @@ public class CourseMaterialPanel extends JPanel {
 
     public void loadMaterials(int courseId) {
         tableModel.setRowCount(0);
-        List<CourseMaterial> list;
+        List<CourseMaterial> list = java.util.Collections.emptyList();
         User current = SessionManager.getCurrentUser();
         if (current == null) return;
-        if (courseId == 0) list = courseService.getMaterialsByLecturer(current.getUserId());
-        else list = courseService.getMaterialsByCourseAndLecturer(courseId, current.getUserId());
+        try {
+            if (courseId == 0) list = courseService.getMaterialsByLecturer(current.getUserId());
+            else list = courseService.getMaterialsByCourseAndLecturer(courseId, current.getUserId());
+        } catch (Exception ignored) {}
 
         for (CourseMaterial m : list) {
             tableModel.addRow(new Object[]{

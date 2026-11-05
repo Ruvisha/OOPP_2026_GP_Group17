@@ -179,14 +179,17 @@ public class QuizManagementPanel extends JPanel {
         cmbCourseFilter.removeAllItems();
         User cur = SessionManager.getCurrentUser();
         if (cur == null) return;
-
-        List<Course> list = assessmentService.getAuthorizedCoursesForLecturer(cur.getUserId());
-        cmbCourseFilter.addItem(new CourseOption(0, "All Assigned Courses (" + list.size() + ")"));
-        for (Course c : list) {
-            cmbCourseFilter.addItem(new CourseOption(c.getCourseId(), c.getCourseCode() + " - " + c.getCourseName()));
-        }
-        if (!list.isEmpty()) {
-            cmbCourseFilter.setSelectedIndex(0);
+        try {
+            List<Course> list = assessmentService.getAuthorizedCoursesForLecturer(cur.getUserId());
+            cmbCourseFilter.addItem(new CourseOption(0, "All Assigned Courses (" + list.size() + ")"));
+            for (Course c : list) {
+                cmbCourseFilter.addItem(new CourseOption(c.getCourseId(), c.getCourseCode() + " - " + c.getCourseName()));
+            }
+            if (!list.isEmpty()) {
+                cmbCourseFilter.setSelectedIndex(0);
+            }
+        } catch (Exception e) {
+            System.err.println("[QuizManagementPanel] Load courses note: " + e.getMessage());
         }
         loadQuizzes();
     }
@@ -199,11 +202,15 @@ public class QuizManagementPanel extends JPanel {
         if (cur == null) return;
 
         CourseOption sel = (CourseOption) cmbCourseFilter.getSelectedItem();
-        List<Quiz> list;
-        if (sel == null || sel.id == 0) {
-            list = assessmentService.getQuizzesByLecturer(cur.getUserId());
-        } else {
-            list = assessmentService.getQuizzesByCourse(sel.id);
+        List<Quiz> list = java.util.Collections.emptyList();
+        try {
+            if (sel == null || sel.id == 0) {
+                list = assessmentService.getQuizzesByLecturer(cur.getUserId());
+            } else {
+                list = assessmentService.getQuizzesByCourse(sel.id);
+            }
+        } catch (Exception e) {
+            System.err.println("[QuizManagementPanel] Load quizzes note: " + e.getMessage());
         }
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");

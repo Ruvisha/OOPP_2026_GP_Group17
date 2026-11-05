@@ -173,12 +173,16 @@ public class StudentDetailsPanel extends JPanel {
 
     private void loadCourses() {
         cmbCourse.removeAllItems();
-        List<Course> list = courseDAO.getAllCourses();
-        for (Course c : list) {
-            cmbCourse.addItem(new CourseComboItem(c.getCourseId(), c.getCourseCode(), c.getCourseName()));
-        }
-        if (cmbCourse.getItemCount() > 0) {
-            cmbCourse.setSelectedIndex(0);
+        try {
+            List<Course> list = courseDAO.getAllCourses();
+            for (Course c : list) {
+                cmbCourse.addItem(new CourseComboItem(c.getCourseId(), c.getCourseCode(), c.getCourseName()));
+            }
+            if (cmbCourse.getItemCount() > 0) {
+                cmbCourse.setSelectedIndex(0);
+            }
+        } catch (Exception e) {
+            System.err.println("[StudentDetailsPanel] Load courses note: " + e.getMessage());
         }
     }
 

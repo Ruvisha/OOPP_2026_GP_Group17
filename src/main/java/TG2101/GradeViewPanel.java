@@ -120,32 +120,35 @@ public class GradeViewPanel extends JPanel {
         User cur = SessionManager.getCurrentUser();
         if (cur == null) return;
 
-        List<Grade> grades = gradeService.getGradesByStudent(cur.getUserId());
-        int totalCredits = 0;
+        try {
+            List<Grade> grades = gradeService.getGradesByStudent(cur.getUserId());
+            int totalCredits = 0;
 
-        for (Grade g : grades) {
-            totalCredits += g.getCredits();
-            tableModel.addRow(new Object[]{
-                g.getCourseCode(),
-                g.getCourseName(),
-                g.getCredits(),
-                String.format("%.1f", g.getCaMark()),
-                String.format("%.1f", g.getFinalExamMark()),
-                String.format("%.1f", g.getTotalMark()),
-                g.getGradeLetter(),
-                String.format("%.2f", g.getGradePoint()),
-                g.isRepeat() ? "REPEAT REQUIRED" : "PASS"
-            });
+            for (Grade g : grades) {
+                totalCredits += g.getCredits();
+                tableModel.addRow(new Object[]{
+                    g.getCourseCode(),
+                    g.getCourseName(),
+                    g.getCredits(),
+                    String.format("%.1f", g.getCaMark()),
+                    String.format("%.1f", g.getFinalExamMark()),
+                    String.format("%.1f", g.getTotalMark()),
+                    g.getGradeLetter(),
+                    String.format("%.2f", g.getGradePoint()),
+                    g.isRepeat() ? "REPEAT REQUIRED" : "PASS"
+                });
+            }
+
+            double sgpa = gpaService.calculateSgpa(grades);
+            double cgpa = gpaService.calculateCgpaForStudent(cur.getUserId());
+            String standing = gpaService.getClassification(cgpa);
+
+            lblSgpa.setText(String.format("%.2f", sgpa));
+            lblCgpa.setText(String.format("%.2f", cgpa));
+            lblTotalCredits.setText(String.valueOf(totalCredits));
+            lblClassification.setText(standing);
+        } catch (Exception e) {
+            System.err.println("[GradeViewPanel] Load grades note: " + e.getMessage());
         }
-
-        double sgpa = gpaService.calculateSgpa(grades);
-        double cgpa = gpaService.calculateCgpaForStudent(cur.getUserId());
-        String standing = gpaService.getClassification(cgpa);
-
-        // Update the summary cards from the same grade list shown in the table.
-        lblSgpa.setText(String.format("%.2f", sgpa));
-        lblCgpa.setText(String.format("%.2f", cgpa));
-        lblTotalCredits.setText(String.valueOf(totalCredits));
-        lblClassification.setText(standing);
     }
 }

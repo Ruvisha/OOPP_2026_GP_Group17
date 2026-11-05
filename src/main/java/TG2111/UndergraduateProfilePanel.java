@@ -154,6 +154,19 @@ public class UndergraduateProfilePanel extends JPanel {
         pf.add(createRow("New Password:", txtNewPass));
         pf.add(createRow("Confirm New Password:", txtConfirmPass));
 
+        JCheckBox chkShowPass = new JCheckBox("Show / Hide Password");
+        chkShowPass.setFont(ModernTheme.FONT_REGULAR);
+        chkShowPass.setForeground(ModernTheme.TEXT_DARK);
+        chkShowPass.setOpaque(false);
+        chkShowPass.addActionListener(e -> {
+            char echo = chkShowPass.isSelected() ? (char) 0 : '•';
+            txtCurrentPass.setEchoChar(echo);
+            txtNewPass.setEchoChar(echo);
+            txtConfirmPass.setEchoChar(echo);
+        });
+        pf.add(Box.createRigidArea(new Dimension(0, 6)));
+        pf.add(chkShowPass);
+
         JLabel info = new JLabel("<html><i>Students can update their contact details, address, profile picture and login password. Course registration and official registration numbers are managed by the Dean's Office.</i></html>");
         info.setFont(ModernTheme.FONT_SMALL);
         info.setForeground(ModernTheme.TEXT_MUTED);
@@ -162,9 +175,22 @@ public class UndergraduateProfilePanel extends JPanel {
 
         passCard.add(pf, BorderLayout.CENTER);
 
+        JPanel passBtnBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        passBtnBar.setOpaque(false);
+
+        JButton btnCancelPass = ModernTheme.createSecondaryButton("Cancel");
+        btnCancelPass.addActionListener(e -> {
+            txtCurrentPass.setText("");
+            txtNewPass.setText("");
+            txtConfirmPass.setText("");
+        });
+
         JButton btnPass = ModernTheme.createSuccessButton("Change Password");
         btnPass.addActionListener(e -> handleChangePassword());
-        passCard.add(btnPass, BorderLayout.SOUTH);
+
+        passBtnBar.add(btnCancelPass);
+        passBtnBar.add(btnPass);
+        passCard.add(passBtnBar, BorderLayout.SOUTH);
 
         grid.add(profileCard);
         grid.add(passCard);
@@ -241,9 +267,19 @@ public class UndergraduateProfilePanel extends JPanel {
         User cur = SessionManager.getCurrentUser();
         if (cur == null) return;
 
-        String curPass = new String(txtCurrentPass.getPassword());
-        String newPass = new String(txtNewPass.getPassword());
-        String confPass = new String(txtConfirmPass.getPassword());
+        String curPass = new String(txtCurrentPass.getPassword()).trim();
+        String newPass = new String(txtNewPass.getPassword()).trim();
+        String confPass = new String(txtConfirmPass.getPassword()).trim();
+
+        if (curPass.isEmpty() || newPass.isEmpty() || confPass.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all password fields.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (newPass.length() < 8) {
+            JOptionPane.showMessageDialog(this, "New password must be at least 8 characters long.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
         if (!newPass.equals(confPass)) {
             JOptionPane.showMessageDialog(this, "New password and confirm password do not match.", "Password Mismatch", JOptionPane.WARNING_MESSAGE);
@@ -252,7 +288,7 @@ public class UndergraduateProfilePanel extends JPanel {
 
         try {
             authService.changePassword(cur.getUserId(), curPass, newPass);
-            JOptionPane.showMessageDialog(this, "Password updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Password changed successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             txtCurrentPass.setText("");
             txtNewPass.setText("");
             txtConfirmPass.setText("");

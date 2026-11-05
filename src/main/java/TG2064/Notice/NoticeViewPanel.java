@@ -68,18 +68,21 @@ public class NoticeViewPanel extends JPanel {
 
     public void loadNotices() {
         tableModel.setRowCount(0);
-        List<Notice> list = noticeService.getActiveNotices();
-        for (Notice n : list) {
-            // Undergraduates see 'ALL' or 'Undergraduate' notices
-            if ("ALL".equalsIgnoreCase(n.getTargetRole()) || "Undergraduate".equalsIgnoreCase(n.getTargetRole())) {
-                tableModel.addRow(new Object[]{
-                    n.getNoticeId(),
-                    n.getTitle(),
-                    DateUtil.formatDate(n.getPublishedDate()),
-                    n.getCreatorName() != null ? n.getCreatorName() : "Dean's Office",
-                    n.getContent()
-                });
+        try {
+            List<Notice> list = noticeService.getActiveNotices();
+            for (Notice n : list) {
+                if ("ALL".equalsIgnoreCase(n.getTargetRole()) || "Undergraduate".equalsIgnoreCase(n.getTargetRole()) || "All Users".equalsIgnoreCase(n.getTargetRole()) || "Undergraduate Students".equalsIgnoreCase(n.getTargetRole())) {
+                    tableModel.addRow(new Object[]{
+                        n.getNoticeId(),
+                        n.getTitle(),
+                        DateUtil.formatDate(n.getPublishedDate()),
+                        n.getCreatorName() != null ? n.getCreatorName() : "Dean's Office",
+                        n.getContent()
+                    });
+                }
             }
+        } catch (Exception e) {
+            System.err.println("[NoticeViewPanel] Load notices note: " + e.getMessage());
         }
     }
 }

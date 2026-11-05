@@ -388,20 +388,31 @@ public class UserManagementPanel extends JPanel {
     private void loadDepartments() {
         cmbDepartment.removeAllItems();
         cmbDepartment.addItem(new DepartmentItem(0, "-- None --"));
-        List<Department> list = departmentDAO.getAllDepartments();
-        for (Department d : list) {
-            cmbDepartment.addItem(new DepartmentItem(d.getDepartmentId(), d.getDepartmentCode() + " - " + d.getDepartmentName()));
+        try {
+            List<Department> list = departmentDAO.getAllDepartments();
+            for (Department d : list) {
+                cmbDepartment.addItem(new DepartmentItem(d.getDepartmentId(), d.getDepartmentCode() + " - " + d.getDepartmentName()));
+            }
+        } catch (Exception e) {
+            System.err.println("[UserManagementPanel] Could not load departments (database offline): " + e.getMessage());
         }
     }
 
     public void loadUsers(int roleIndex) {
         tableModel.setRowCount(0);
-        List<User> list;
-        if (roleIndex == 0) {
-            list = userService.getAllUsers();
-        } else {
-            list = userService.getUsersByRole(roleIndex);
+        List<User> list = null;
+        try {
+            if (roleIndex == 0) {
+                list = userService.getAllUsers();
+            } else {
+                list = userService.getUsersByRole(roleIndex);
+            }
+        } catch (Exception e) {
+            System.err.println("[UserManagementPanel] Could not load users (database offline): " + e.getMessage());
+            return;
         }
+
+        if (list == null) return;
 
         for (User u : list) {
             String roleExtra = "";

@@ -1,9 +1,11 @@
 package com.fot.ams.ui.admin;
 
+import com.fot.ams.dao.NotificationDAO;
 import com.fot.ams.exception.ValidationException;
 import com.fot.ams.model.Notice;
 import com.fot.ams.model.User;
 import com.fot.ams.service.NoticeService;
+import com.fot.ams.ui.common.ModernIcons;
 import com.fot.ams.ui.common.ModernTheme;
 import com.fot.ams.util.DateUtil;
 import com.fot.ams.util.SessionManager;
@@ -15,13 +17,17 @@ import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Administrative panel for managing academic announcements and notices.
+ * Modern University Notice Management Panel.
+ * Features multi-role target selection checkboxes, priority level, optional expiry,
+ * and user-specific notification distribution.
  */
 public class NoticeManagementPanel extends JPanel {
     private final NoticeService noticeService;
+    private final NotificationDAO notificationDAO;
 
     private JTable noticeTable;
     private DefaultTableModel tableModel;
@@ -30,8 +36,15 @@ public class NoticeManagementPanel extends JPanel {
     private JTextField txtTitle;
     private JTextArea txtContent;
     private JTextField txtPublishedDate;
-    private JComboBox<String> cmbTargetRole;
+    private JTextField txtExpiryDate;
+    private JComboBox<String> cmbPriority;
     private JComboBox<String> cmbStatus;
+
+    // Multi-role checkboxes
+    private JCheckBox chkAdmin;
+    private JCheckBox chkLecturer;
+    private JCheckBox chkTech;
+    private JCheckBox chkStudent;
 
     private JButton btnAdd;
     private JButton btnUpdate;
@@ -40,6 +53,7 @@ public class NoticeManagementPanel extends JPanel {
 
     public NoticeManagementPanel() {
         this.noticeService = new NoticeService();
+        this.notificationDAO = new NotificationDAO();
         initComponents();
         loadNotices();
     }
@@ -49,24 +63,24 @@ public class NoticeManagementPanel extends JPanel {
         setBackground(ModernTheme.BG_MAIN);
         setBorder(new EmptyBorder(15, 15, 15, 15));
 
-        JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
         topBar.setBackground(Color.WHITE);
         topBar.setBorder(new LineBorder(ModernTheme.BORDER, 1));
-        JLabel title = new JLabel("Official Faculty Notice & Announcement Management");
+        JLabel title = new JLabel("Official Faculty Notice & Announcement Management", ModernIcons.get("notices", 20, ModernTheme.PRIMARY), SwingConstants.LEFT);
         title.setFont(ModernTheme.FONT_SUBTITLE);
         title.setForeground(ModernTheme.PRIMARY);
         topBar.add(title);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setResizeWeight(0.65);
-        splitPane.setDividerLocation(650);
+        splitPane.setResizeWeight(0.60);
+        splitPane.setDividerLocation(620);
 
-        // Table Panel
+        // Table Panel (Left)
         JPanel tablePanel = new JPanel(new BorderLayout());
         tablePanel.setBackground(Color.WHITE);
         tablePanel.setBorder(new LineBorder(ModernTheme.BORDER, 1));
 
-        String[] cols = {"ID", "Title", "Date", "Target Role", "Created By", "Status"};
+        String[] cols = {"ID", "Title", "Date", "Target Roles", "Created By", "Status"};
         tableModel = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -85,15 +99,15 @@ public class NoticeManagementPanel extends JPanel {
 
         tablePanel.add(new JScrollPane(noticeTable), BorderLayout.CENTER);
 
-        // Form Panel
+        // Form Panel (Right)
         JPanel formCard = ModernTheme.createCardPanel();
-        formCard.setLayout(new BorderLayout());
-        formCard.setPreferredSize(new Dimension(360, 500));
+        formCard.setLayout(new BorderLayout(0, 10));
+        formCard.setPreferredSize(new Dimension(420, 560));
 
-        JLabel formHeader = new JLabel("Notice Details");
+        JLabel formHeader = new JLabel("Notice & Announcement Details");
         formHeader.setFont(ModernTheme.FONT_SUBTITLE);
         formHeader.setForeground(ModernTheme.PRIMARY);
-        formHeader.setBorder(new EmptyBorder(0, 0, 10, 0));
+        formHeader.setBorder(new EmptyBorder(0, 0, 8, 0));
         formCard.add(formHeader, BorderLayout.NORTH);
 
         JPanel fields = new JPanel();
@@ -105,32 +119,38 @@ public class NoticeManagementPanel extends JPanel {
 
         txtTitle = new JTextField();
         txtPublishedDate = new JTextField(DateUtil.formatDate(DateUtil.nowSqlDate()));
-        cmbTargetRole = new JComboBox<>(new String[]{"ALL", "Undergraduate", "Lecturer", "Technical Officer"});
+        txtExpiryDate = new JTextField();
+        cmbPriority = new JComboBox<>(new String[]{"Normal", "Important", "Urgent"});
         cmbStatus = new JComboBox<>(new String[]{"ACTIVE", "ARCHIVED"});
 
-        txtContent = new JTextArea(8, 20);
+        txtContent = new JTextArea(6, 20);
         txtContent.setFont(ModernTheme.FONT_REGULAR);
         txtContent.setLineWrap(true);
         txtContent.setWrapStyleWord(true);
         txtContent.setBorder(new LineBorder(ModernTheme.BORDER, 1));
 
-        fields.add(createRow("Title:", txtTitle));
+        fields.add(createRow("Notice Title:", txtTitle));
         fields.add(createRow("Published Date (YYYY-MM-DD):", txtPublishedDate));
-        fields.add(createRow("Target Audience:", cmbTargetRole));
+        fields.add(createRow("Expiry Date (Optional, YYYY-MM-DD):", txtExpiryDate));
+        fields.add(createRow("Notice Priority Level:", cmbPriority));
+        fields.add(createTargetRolesPanel());
         fields.add(createRow("Status:", cmbStatus));
-        fields.add(createRow("Notice Content / Announcement Body:", new JScrollPane(txtContent)));
+        fields.add(createRow("Notice Description / Body:", new JScrollPane(txtContent)));
 
-        formCard.add(fields, BorderLayout.CENTER);
+        JScrollPane formScroll = new JScrollPane(fields);
+        formScroll.setBorder(null);
+        formScroll.getVerticalScrollBar().setUnitIncrement(14);
+        formCard.add(formScroll, BorderLayout.CENTER);
 
         // Action Buttons
         JPanel btnPanel = new JPanel(new GridLayout(2, 2, 8, 8));
         btnPanel.setOpaque(false);
         btnPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
 
-        btnAdd = ModernTheme.createPrimaryButton("Create Notice");
+        btnAdd = ModernTheme.createPrimaryButton("Publish Notice");
         btnUpdate = ModernTheme.createSuccessButton("Update Notice");
         btnDelete = ModernTheme.createDangerButton("Delete Notice");
-        btnClear = ModernTheme.createSecondaryButton("Clear Form");
+        btnClear = ModernTheme.createSecondaryButton("Cancel");
 
         btnPanel.add(btnAdd);
         btnPanel.add(btnUpdate);
@@ -150,17 +170,89 @@ public class NoticeManagementPanel extends JPanel {
         btnClear.addActionListener(e -> clearForm());
     }
 
-    private JPanel createRow(String labelText, JComponent comp) {
-        JPanel p = new JPanel(new BorderLayout(5, 2));
+    private JPanel createTargetRolesPanel() {
+        JPanel p = new JPanel(new BorderLayout(4, 4));
         p.setOpaque(false);
-        p.setMaximumSize(new Dimension(Short.MAX_VALUE, 50));
+        p.setBorder(new EmptyBorder(4, 0, 8, 0));
+
+        JLabel lbl = new JLabel("Target Roles (Multi-Role Distribution):");
+        lbl.setFont(ModernTheme.FONT_SMALL);
+        lbl.setForeground(ModernTheme.TEXT_MUTED);
+        p.add(lbl, BorderLayout.NORTH);
+
+        JPanel roleBox = new JPanel();
+        roleBox.setLayout(new BoxLayout(roleBox, BoxLayout.Y_AXIS));
+        roleBox.setBackground(new Color(248, 250, 252));
+        roleBox.setBorder(new CompoundBorder(new LineBorder(ModernTheme.BORDER, 1), new EmptyBorder(6, 8, 6, 8)));
+
+        chkAdmin = new JCheckBox("Administrator");
+        chkLecturer = new JCheckBox("Lecturer");
+        chkTech = new JCheckBox("Technical Officer");
+        chkStudent = new JCheckBox("Undergraduate Student");
+
+        chkAdmin.setOpaque(false);
+        chkLecturer.setOpaque(false);
+        chkTech.setOpaque(false);
+        chkStudent.setOpaque(false);
+
+        // Default all selected
+        chkAdmin.setSelected(true);
+        chkLecturer.setSelected(true);
+        chkTech.setSelected(true);
+        chkStudent.setSelected(true);
+
+        JPanel checkGrid = new JPanel(new GridLayout(2, 2, 6, 4));
+        checkGrid.setOpaque(false);
+        checkGrid.add(chkAdmin);
+        checkGrid.add(chkLecturer);
+        checkGrid.add(chkTech);
+        checkGrid.add(chkStudent);
+
+        JPanel actionRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
+        actionRow.setOpaque(false);
+
+        JButton btnSelectAll = new JButton("Select All Roles");
+        btnSelectAll.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        btnSelectAll.setFocusPainted(false);
+        btnSelectAll.addActionListener(e -> {
+            chkAdmin.setSelected(true);
+            chkLecturer.setSelected(true);
+            chkTech.setSelected(true);
+            chkStudent.setSelected(true);
+        });
+
+        JButton btnClearRoles = new JButton("Clear Selection");
+        btnClearRoles.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        btnClearRoles.setFocusPainted(false);
+        btnClearRoles.addActionListener(e -> {
+            chkAdmin.setSelected(false);
+            chkLecturer.setSelected(false);
+            chkTech.setSelected(false);
+            chkStudent.setSelected(false);
+        });
+
+        actionRow.add(btnSelectAll);
+        actionRow.add(btnClearRoles);
+
+        roleBox.add(checkGrid);
+        roleBox.add(Box.createRigidArea(new Dimension(0, 4)));
+        roleBox.add(actionRow);
+
+        p.add(roleBox, BorderLayout.CENTER);
+        return p;
+    }
+
+    private JPanel createRow(String labelText, JComponent comp) {
+        JPanel p = new JPanel(new BorderLayout(4, 2));
+        p.setOpaque(false);
+        p.setMaximumSize(new Dimension(Short.MAX_VALUE, 52));
         JLabel lbl = new JLabel(labelText);
         lbl.setFont(ModernTheme.FONT_SMALL);
         lbl.setForeground(ModernTheme.TEXT_MUTED);
 
         comp.setFont(ModernTheme.FONT_REGULAR);
         if (comp instanceof JTextField) {
-            comp.setPreferredSize(new Dimension(200, 26));
+            comp.setPreferredSize(new Dimension(200, 28));
             comp.setBorder(new CompoundBorder(new LineBorder(ModernTheme.BORDER, 1), new EmptyBorder(2, 6, 2, 6)));
         }
 
@@ -172,16 +264,20 @@ public class NoticeManagementPanel extends JPanel {
 
     public void loadNotices() {
         tableModel.setRowCount(0);
-        List<Notice> list = noticeService.getAllNotices();
-        for (Notice n : list) {
-            tableModel.addRow(new Object[]{
-                n.getNoticeId(),
-                n.getTitle(),
-                DateUtil.formatDate(n.getPublishedDate()),
-                n.getTargetRole(),
-                n.getCreatorName() != null ? n.getCreatorName() : "Admin",
-                n.getStatus()
-            });
+        try {
+            List<Notice> list = noticeService.getAllNotices();
+            for (Notice n : list) {
+                tableModel.addRow(new Object[]{
+                    n.getNoticeId(),
+                    n.getTitle(),
+                    DateUtil.formatDate(n.getPublishedDate()),
+                    n.getTargetRole(),
+                    n.getCreatorName() != null ? n.getCreatorName() : "Admin",
+                    n.getStatus()
+                });
+            }
+        } catch (Exception e) {
+            System.err.println("[NoticeManagementPanel] Notice load note: " + e.getMessage());
         }
     }
 
@@ -190,17 +286,52 @@ public class NoticeManagementPanel extends JPanel {
         if (row == -1) return;
 
         int id = (int) tableModel.getValueAt(row, 0);
-        List<Notice> list = noticeService.getAllNotices();
-        for (Notice n : list) {
-            if (n.getNoticeId() == id) {
-                txtNoticeId.setText(String.valueOf(n.getNoticeId()));
-                txtTitle.setText(n.getTitle());
-                txtContent.setText(n.getContent());
-                txtPublishedDate.setText(DateUtil.formatDate(n.getPublishedDate()));
-                cmbTargetRole.setSelectedItem(n.getTargetRole());
-                cmbStatus.setSelectedItem(n.getStatus());
-                break;
+        try {
+            List<Notice> list = noticeService.getAllNotices();
+            for (Notice n : list) {
+                if (n.getNoticeId() == id) {
+                    txtNoticeId.setText(String.valueOf(n.getNoticeId()));
+                    txtTitle.setText(n.getTitle());
+                    txtContent.setText(n.getContent());
+                    txtPublishedDate.setText(DateUtil.formatDate(n.getPublishedDate()));
+                    setTargetRolesSelection(n.getTargetRole());
+                    cmbStatus.setSelectedItem(n.getStatus());
+                    break;
+                }
             }
+        } catch (Exception e) {
+            System.err.println("[NoticeManagementPanel] Populate form note: " + e.getMessage());
+        }
+    }
+
+    private String getSelectedRoles() throws ValidationException {
+        List<String> roles = new ArrayList<>();
+        if (chkAdmin.isSelected()) roles.add("ADMIN");
+        if (chkLecturer.isSelected()) roles.add("LECTURER");
+        if (chkTech.isSelected()) roles.add("TECH");
+        if (chkStudent.isSelected()) roles.add("UNDERGRADUATE");
+
+        if (roles.isEmpty()) {
+            throw new ValidationException("Please select at least one recipient role.");
+        }
+        if (roles.size() == 4) {
+            return "ALL";
+        }
+        return String.join(",", roles);
+    }
+
+    private void setTargetRolesSelection(String role) {
+        if (role == null || role.trim().isEmpty() || "ALL".equalsIgnoreCase(role) || "All Users".equalsIgnoreCase(role)) {
+            chkAdmin.setSelected(true);
+            chkLecturer.setSelected(true);
+            chkTech.setSelected(true);
+            chkStudent.setSelected(true);
+        } else {
+            String upper = role.toUpperCase();
+            chkAdmin.setSelected(upper.contains("ADMIN"));
+            chkLecturer.setSelected(upper.contains("LECTURER"));
+            chkTech.setSelected(upper.contains("TECH"));
+            chkStudent.setSelected(upper.contains("UNDERGRADUATE") || upper.contains("STUDENT"));
         }
     }
 
@@ -210,7 +341,12 @@ public class NoticeManagementPanel extends JPanel {
         txtTitle.setText("");
         txtContent.setText("");
         txtPublishedDate.setText(DateUtil.formatDate(DateUtil.nowSqlDate()));
-        cmbTargetRole.setSelectedItem("ALL");
+        txtExpiryDate.setText("");
+        cmbPriority.setSelectedItem("Normal");
+        chkAdmin.setSelected(true);
+        chkLecturer.setSelected(true);
+        chkTech.setSelected(true);
+        chkStudent.setSelected(true);
         cmbStatus.setSelectedItem("ACTIVE");
     }
 
@@ -219,21 +355,33 @@ public class NoticeManagementPanel extends JPanel {
             Date pubDate = DateUtil.parseDate(txtPublishedDate.getText().trim());
             if (pubDate == null) throw new ValidationException("Invalid published date format (Use YYYY-MM-DD).");
 
+            String title = txtTitle.getText().trim();
+            if (title.isEmpty()) throw new ValidationException("Notice title cannot be empty.");
+
+            String content = txtContent.getText().trim();
+            if (content.isEmpty()) throw new ValidationException("Notice description cannot be empty.");
+
+            String targetRoles = getSelectedRoles();
+
             User current = SessionManager.getCurrentUser();
             Integer creatorId = current != null ? current.getUserId() : 1;
 
             Notice n = new Notice(
                 0,
-                txtTitle.getText().trim(),
-                txtContent.getText().trim(),
+                title,
+                content,
                 pubDate,
                 creatorId,
-                (String) cmbTargetRole.getSelectedItem(),
+                targetRoles,
                 (String) cmbStatus.getSelectedItem()
             );
 
-            noticeService.addNotice(n);
-            JOptionPane.showMessageDialog(this, "Notice published successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            boolean added = noticeService.addNotice(n);
+            if (added && "ACTIVE".equalsIgnoreCase(n.getStatus())) {
+                notificationDAO.distributeNoticeNotifications(n.getNoticeId(), n.getTargetRole());
+            }
+
+            JOptionPane.showMessageDialog(this, "Notice published successfully and distributed to target roles!", "Notice Published", JOptionPane.INFORMATION_MESSAGE);
             loadNotices();
             clearForm();
         } catch (ValidationException ex) {
@@ -254,17 +402,29 @@ public class NoticeManagementPanel extends JPanel {
             Date pubDate = DateUtil.parseDate(txtPublishedDate.getText().trim());
             if (pubDate == null) throw new ValidationException("Invalid published date format (Use YYYY-MM-DD).");
 
+            String title = txtTitle.getText().trim();
+            if (title.isEmpty()) throw new ValidationException("Notice title cannot be empty.");
+
+            String content = txtContent.getText().trim();
+            if (content.isEmpty()) throw new ValidationException("Notice description cannot be empty.");
+
+            String targetRoles = getSelectedRoles();
+
             Notice n = new Notice(
                 id,
-                txtTitle.getText().trim(),
-                txtContent.getText().trim(),
+                title,
+                content,
                 pubDate,
                 null,
-                (String) cmbTargetRole.getSelectedItem(),
+                targetRoles,
                 (String) cmbStatus.getSelectedItem()
             );
 
-            noticeService.updateNotice(n);
+            boolean updated = noticeService.updateNotice(n);
+            if (updated && "ACTIVE".equalsIgnoreCase(n.getStatus())) {
+                notificationDAO.distributeNoticeNotifications(n.getNoticeId(), n.getTargetRole());
+            }
+
             JOptionPane.showMessageDialog(this, "Notice updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             loadNotices();
             clearForm();

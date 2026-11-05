@@ -121,6 +121,13 @@ public class NoticeDAO {
     }
 
     public boolean deleteNotice(int noticeId) {
+        String cleanNotif = "DELETE FROM user_notifications WHERE notice_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement p = conn.prepareStatement(cleanNotif)) {
+            p.setInt(1, noticeId);
+            p.executeUpdate();
+        } catch (Exception ignored) {
+        }
         String sql = "DELETE FROM notices WHERE notice_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
