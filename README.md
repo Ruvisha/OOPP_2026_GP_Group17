@@ -88,7 +88,7 @@ src/main/resources/config.properties
 Default settings (XAMPP defaults — no changes needed for a fresh XAMPP install):
 ```properties
 db.host=localhost
-db.port=3307
+db.port=3306
 db.database=faculty_academic_management
 db.username=root
 db.password=

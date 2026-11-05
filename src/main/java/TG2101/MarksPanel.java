@@ -52,6 +52,18 @@ public class MarksPanel extends JPanel {
     private JTable gradeTable;
     private DefaultTableModel gradeTableModel;
 
+    // Tab 4: Grade Summary & Analytics
+    private JComboBox<CourseItem> cmbSummaryCourse;
+    private JLabel lblTotalStudentsVal;
+    private JLabel lblPassCountVal;
+    private JLabel lblFailCountVal;
+    private JLabel lblAvgMarkVal;
+    private JLabel lblHighestMarkVal;
+    private JLabel lblLowestMarkVal;
+    private JTable summaryTable;
+    private DefaultTableModel summaryTableModel;
+    private JPanel distributionChartPanel;
+
     private static class CourseItem {
         final int id;
         final String code;
@@ -108,6 +120,7 @@ public class MarksPanel extends JPanel {
         tabbedPane.addTab("Marks Upload & Evaluation", createMarksEntryTab());
         tabbedPane.addTab("CA & Exam Eligibility (CA \u2265 40%)", createEligibilityTab());
         tabbedPane.addTab("Final Grades & GPA Calculation", createGradesTab());
+        tabbedPane.addTab("Grade Summary & Analytics", createGradeSummaryTab());
 
         add(tabbedPane, BorderLayout.CENTER);
     }
@@ -339,6 +352,142 @@ public class MarksPanel extends JPanel {
         return panel;
     }
 
+    // ------------------------------------------------------------------------
+    // TAB 4: GRADE SUMMARY & ANALYTICS
+    // ------------------------------------------------------------------------
+    private JPanel createGradeSummaryTab() {
+        JPanel panel = new JPanel(new BorderLayout(15, 15));
+        panel.setBackground(ModernTheme.BG_MAIN);
+
+        // Top Filter / Control Bar
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 10));
+        top.setBackground(Color.WHITE);
+        top.setBorder(new LineBorder(ModernTheme.BORDER, 1));
+
+        JLabel lbl = new JLabel("Select Course:");
+        lbl.setFont(ModernTheme.FONT_BOLD);
+        cmbSummaryCourse = new JComboBox<>();
+        cmbSummaryCourse.setPreferredSize(new Dimension(340, 30));
+        cmbSummaryCourse.addActionListener(e -> loadGradeSummary());
+
+        JButton btnRefresh = ModernTheme.createSecondaryButton("Refresh Summary");
+        btnRefresh.addActionListener(e -> loadGradeSummary());
+
+        top.add(lbl);
+        top.add(cmbSummaryCourse);
+        top.add(btnRefresh);
+
+        // Center Content Area: Stat Cards on Top + Split/Grid for Distribution Table & Visual Representation
+        JPanel centerPanel = new JPanel(new BorderLayout(12, 12));
+        centerPanel.setOpaque(false);
+
+        // 6 Key Stat Cards
+        JPanel statsGrid = new JPanel(new GridLayout(2, 3, 12, 12));
+        statsGrid.setOpaque(false);
+
+        lblTotalStudentsVal = new JLabel("0", SwingConstants.CENTER);
+        lblPassCountVal = new JLabel("0 (0.0%)", SwingConstants.CENTER);
+        lblFailCountVal = new JLabel("0 (0.0%)", SwingConstants.CENTER);
+        lblAvgMarkVal = new JLabel("0.0", SwingConstants.CENTER);
+        lblHighestMarkVal = new JLabel("0.0", SwingConstants.CENTER);
+        lblLowestMarkVal = new JLabel("0.0", SwingConstants.CENTER);
+
+        statsGrid.add(createSummaryMetricCard("Total Enrolled Students", lblTotalStudentsVal, ModernTheme.PRIMARY));
+        statsGrid.add(createSummaryMetricCard("Passed Students", lblPassCountVal, ModernTheme.SUCCESS));
+        statsGrid.add(createSummaryMetricCard("Repeat / Failed Students", lblFailCountVal, ModernTheme.DANGER));
+        statsGrid.add(createSummaryMetricCard("Class Average Total Mark", lblAvgMarkVal, ModernTheme.ACCENT));
+        statsGrid.add(createSummaryMetricCard("Highest Total Mark", lblHighestMarkVal, new Color(16, 185, 129)));
+        statsGrid.add(createSummaryMetricCard("Lowest Total Mark", lblLowestMarkVal, new Color(245, 158, 11)));
+
+        centerPanel.add(statsGrid, BorderLayout.NORTH);
+
+        // Bottom section: Left (Grade Distribution Table) & Right (Visual Distribution Bars)
+        JSplitPane splitBottom = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitBottom.setResizeWeight(0.5);
+        splitBottom.setDividerLocation(520);
+        splitBottom.setBorder(null);
+
+        // Left Table: Grade Letter, Range, Student Count, Percentage
+        String[] cols = {"Grade Letter", "Mark Range", "Grade Point", "Student Count", "Percentage"};
+        summaryTableModel = new DefaultTableModel(cols, 0) {
+            @Override
+            public boolean isCellEditable(int row, int col) {
+                return false;
+            }
+        };
+
+        summaryTable = new JTable(summaryTableModel);
+        ModernTheme.styleTable(summaryTable);
+
+        JPanel tableWrapper = new JPanel(new BorderLayout());
+        tableWrapper.setBackground(Color.WHITE);
+        tableWrapper.setBorder(new LineBorder(ModernTheme.BORDER, 1));
+
+        JLabel tblHeader = new JLabel("  Grade Distribution Breakdown (UGC Standard)");
+        tblHeader.setFont(ModernTheme.FONT_SUBTITLE);
+        tblHeader.setForeground(ModernTheme.PRIMARY);
+        tblHeader.setBorder(new EmptyBorder(10, 8, 10, 8));
+        tableWrapper.add(tblHeader, BorderLayout.NORTH);
+        tableWrapper.add(new JScrollPane(summaryTable), BorderLayout.CENTER);
+
+        // Right Visual Chart Panel
+        JPanel chartCard = ModernTheme.createCardPanel();
+        chartCard.setLayout(new BorderLayout());
+
+        JLabel chartHeader = new JLabel("Visual Distribution Representation");
+        chartHeader.setFont(ModernTheme.FONT_SUBTITLE);
+        chartHeader.setForeground(ModernTheme.PRIMARY);
+        chartHeader.setBorder(new EmptyBorder(0, 0, 10, 0));
+        chartCard.add(chartHeader, BorderLayout.NORTH);
+
+        distributionChartPanel = new JPanel();
+        distributionChartPanel.setLayout(new BoxLayout(distributionChartPanel, BoxLayout.Y_AXIS));
+        distributionChartPanel.setBackground(Color.WHITE);
+
+        JScrollPane chartScroll = new JScrollPane(distributionChartPanel);
+        chartScroll.setBorder(null);
+        chartScroll.getViewport().setBackground(Color.WHITE);
+        chartCard.add(chartScroll, BorderLayout.CENTER);
+
+        splitBottom.setLeftComponent(tableWrapper);
+        splitBottom.setRightComponent(chartCard);
+
+        centerPanel.add(splitBottom, BorderLayout.CENTER);
+
+        panel.add(top, BorderLayout.NORTH);
+        panel.add(centerPanel, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private JPanel createSummaryMetricCard(String title, JLabel valueLabel, Color accentColor) {
+        JPanel card = ModernTheme.createCardPanel();
+        card.setLayout(new BorderLayout(5, 5));
+
+        JPanel bar = new JPanel();
+        bar.setBackground(accentColor);
+        bar.setPreferredSize(new Dimension(5, 45));
+        card.add(bar, BorderLayout.WEST);
+
+        JPanel content = new JPanel(new GridLayout(2, 1, 2, 2));
+        content.setOpaque(false);
+
+        JLabel lblTitle = new JLabel(title);
+        lblTitle.setFont(ModernTheme.FONT_SMALL);
+        lblTitle.setForeground(ModernTheme.TEXT_MUTED);
+
+        valueLabel.setFont(ModernTheme.FONT_TITLE);
+        valueLabel.setForeground(ModernTheme.TEXT_DARK);
+        valueLabel.setHorizontalAlignment(SwingConstants.LEFT);
+
+        content.add(lblTitle);
+        content.add(valueLabel);
+        content.setBorder(new EmptyBorder(5, 8, 5, 8));
+
+        card.add(content, BorderLayout.CENTER);
+        return card;
+    }
+
     private JPanel createRow(String labelText, JComponent comp) {
         JPanel p = new JPanel(new BorderLayout(5, 2));
         p.setOpaque(false);
@@ -363,6 +512,9 @@ public class MarksPanel extends JPanel {
         cmbMarksCourse.removeAllItems();
         cmbEligCourse.removeAllItems();
         cmbGradeCourse.removeAllItems();
+        if (cmbSummaryCourse != null) {
+            cmbSummaryCourse.removeAllItems();
+        }
 
         List<Course> list = java.util.Collections.emptyList();
         try {
@@ -373,6 +525,9 @@ public class MarksPanel extends JPanel {
             cmbMarksCourse.addItem(item);
             cmbEligCourse.addItem(item);
             cmbGradeCourse.addItem(item);
+            if (cmbSummaryCourse != null) {
+                cmbSummaryCourse.addItem(item);
+            }
         }
 
         if (cmbMarksCourse.getItemCount() > 0) {
@@ -550,9 +705,157 @@ public class MarksPanel extends JPanel {
                 gradeService.calculateGradesForCourse(c.id, "2024/2025");
                 JOptionPane.showMessageDialog(this, "Final grades calculated and updated successfully!", "Grades Finalized", JOptionPane.INFORMATION_MESSAGE);
                 loadGrades();
+                if (cmbSummaryCourse != null && cmbSummaryCourse.getSelectedItem() != null) {
+                    loadGradeSummary();
+                }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Error calculating grades: " + ex.getMessage(), "Calculation Error", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    private void loadGradeSummary() {
+        if (cmbSummaryCourse == null || summaryTableModel == null) return;
+        CourseItem c = (CourseItem) cmbSummaryCourse.getSelectedItem();
+        if (c == null) return;
+
+        summaryTableModel.setRowCount(0);
+        distributionChartPanel.removeAll();
+
+        List<Grade> grades = gradeService.getGradesByCourse(c.id);
+        int total = grades.size();
+
+        if (total == 0) {
+            lblTotalStudentsVal.setText("0");
+            lblPassCountVal.setText("0 (0.0%)");
+            lblFailCountVal.setText("0 (0.0%)");
+            lblAvgMarkVal.setText("0.0");
+            lblHighestMarkVal.setText("0.0");
+            lblLowestMarkVal.setText("0.0");
+
+            JLabel emptyLbl = new JLabel("No grades recorded or calculated for this course yet.");
+            emptyLbl.setFont(ModernTheme.FONT_REGULAR);
+            emptyLbl.setForeground(ModernTheme.TEXT_MUTED);
+            emptyLbl.setBorder(new EmptyBorder(20, 10, 10, 10));
+            distributionChartPanel.add(emptyLbl);
+            distributionChartPanel.revalidate();
+            distributionChartPanel.repaint();
+            return;
+        }
+
+        int passCount = 0;
+        int failCount = 0;
+        double sumTotal = 0.0;
+        double highest = Double.NEGATIVE_INFINITY;
+        double lowest = Double.POSITIVE_INFINITY;
+
+        // Map to count standard UGC grades
+        String[] gradeLetters = {"A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "E"};
+        String[] markRanges = {
+            "85 - 100", "80 - 84", "75 - 79", "70 - 74", "65 - 69",
+            "60 - 64", "55 - 59", "50 - 54", "45 - 49", "40 - 44", "0 - 39"
+        };
+        double[] gradePoints = {4.00, 4.00, 3.70, 3.30, 3.00, 2.70, 2.30, 2.00, 1.70, 1.30, 0.00};
+        int[] counts = new int[gradeLetters.length];
+
+        for (Grade g : grades) {
+            double mark = g.getTotalMark();
+            sumTotal += mark;
+            if (mark > highest) highest = mark;
+            if (mark < lowest) lowest = mark;
+
+            if (g.isRepeat() || "E".equalsIgnoreCase(g.getGradeLetter())) {
+                failCount++;
+            } else {
+                passCount++;
+            }
+
+            String gl = g.getGradeLetter() != null ? g.getGradeLetter().trim() : "E";
+            boolean matched = false;
+            for (int i = 0; i < gradeLetters.length; i++) {
+                if (gradeLetters[i].equalsIgnoreCase(gl)) {
+                    counts[i]++;
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) {
+                // If special repeat notation like EC, EE or unrecognized, map to E
+                counts[gradeLetters.length - 1]++;
+            }
+        }
+
+        double avgMark = sumTotal / total;
+        double passPct = (passCount * 100.0) / total;
+        double failPct = (failCount * 100.0) / total;
+
+        lblTotalStudentsVal.setText(String.valueOf(total));
+        lblPassCountVal.setText(String.format("%d (%.1f%%)", passCount, passPct));
+        lblFailCountVal.setText(String.format("%d (%.1f%%)", failCount, failPct));
+        lblAvgMarkVal.setText(String.format("%.1f", avgMark));
+        lblHighestMarkVal.setText(String.format("%.1f", highest));
+        lblLowestMarkVal.setText(String.format("%.1f", lowest));
+
+        // Populate Table and Visual Representation Bars
+        for (int i = 0; i < gradeLetters.length; i++) {
+            int cnt = counts[i];
+            double pct = (cnt * 100.0) / total;
+
+            summaryTableModel.addRow(new Object[]{
+                gradeLetters[i],
+                markRanges[i],
+                String.format("%.2f", gradePoints[i]),
+                cnt,
+                String.format("%.1f%%", pct)
+            });
+
+            // Add visual row bar
+            JPanel barRow = createVisualBarRow(gradeLetters[i], cnt, pct);
+            distributionChartPanel.add(barRow);
+        }
+
+        distributionChartPanel.revalidate();
+        distributionChartPanel.repaint();
+    }
+
+    private JPanel createVisualBarRow(String grade, int count, double percentage) {
+        JPanel row = new JPanel(new BorderLayout(8, 0));
+        row.setOpaque(false);
+        row.setMaximumSize(new Dimension(Short.MAX_VALUE, 30));
+        row.setBorder(new EmptyBorder(3, 8, 3, 8));
+
+        JLabel lblName = new JLabel(String.format("%-3s", grade));
+        lblName.setFont(ModernTheme.FONT_BOLD);
+        lblName.setPreferredSize(new Dimension(36, 20));
+
+        JProgressBar bar = new JProgressBar(0, 100);
+        bar.setValue((int) Math.round(percentage));
+        bar.setStringPainted(false);
+        bar.setPreferredSize(new Dimension(160, 14));
+        bar.setBackground(new Color(241, 245, 249));
+
+        if (grade.startsWith("A")) {
+            bar.setForeground(ModernTheme.SUCCESS);
+        } else if (grade.startsWith("B")) {
+            bar.setForeground(ModernTheme.ACCENT);
+        } else if (grade.startsWith("C")) {
+            bar.setForeground(ModernTheme.PRIMARY);
+        } else if (grade.startsWith("D")) {
+            bar.setForeground(ModernTheme.WARNING);
+        } else {
+            bar.setForeground(ModernTheme.DANGER);
+        }
+
+        JLabel lblStat = new JLabel(String.format("%d (%.1f%%)", count, percentage));
+        lblStat.setFont(ModernTheme.FONT_SMALL);
+        lblStat.setForeground(ModernTheme.TEXT_SECONDARY);
+        lblStat.setPreferredSize(new Dimension(80, 20));
+        lblStat.setHorizontalAlignment(SwingConstants.RIGHT);
+
+        row.add(lblName, BorderLayout.WEST);
+        row.add(bar, BorderLayout.CENTER);
+        row.add(lblStat, BorderLayout.EAST);
+
+        return row;
     }
 }

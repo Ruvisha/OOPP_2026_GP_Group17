@@ -62,6 +62,7 @@ com\fot\ams\dao\QuizDAO.class
 com\fot\ams\dao\RoleDAO.class
 com\fot\ams\model\CourseEnrollment.class
 com\fot\ams\ui\undergraduate\QuizTakingPanel.class
+com\fot\ams\ui\lecturer\MarksPanel$4.class
 com\fot\ams\ui\admin\CourseManagementPanel.class
 com\fot\ams\ui\admin\MarksOverviewPanel$2.class
 com\fot\ams\ui\admin\AdminDashboard$4.class
