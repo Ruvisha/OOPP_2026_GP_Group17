@@ -384,11 +384,15 @@ public class CourseManagementPanel extends JPanel {
         cmbDepartment.removeAllItems();
         cmbDepartmentFilter.removeAllItems();
         cmbDepartmentFilter.addItem(new FilterItem(0, "All Departments"));
-        List<Department> list = departmentDAO.getAllDepartments();
-        for (Department d : list) {
-            String label = d.getDepartmentCode() + " - " + d.getDepartmentName();
-            cmbDepartment.addItem(new DeptItem(d.getDepartmentId(), label));
-            cmbDepartmentFilter.addItem(new FilterItem(d.getDepartmentId(), label));
+        try {
+            List<Department> list = departmentDAO.getAllDepartments();
+            for (Department d : list) {
+                String label = d.getDepartmentCode() + " - " + d.getDepartmentName();
+                cmbDepartment.addItem(new DeptItem(d.getDepartmentId(), label));
+                cmbDepartmentFilter.addItem(new FilterItem(d.getDepartmentId(), label));
+            }
+        } catch (Exception e) {
+            System.err.println("[CourseManagementPanel] Load departments note: " + e.getMessage());
         }
     }
 
@@ -406,13 +410,14 @@ public class CourseManagementPanel extends JPanel {
 
     public void loadCourses() {
         tableModel.setRowCount(0);
-        FilterItem dept = (FilterItem) cmbDepartmentFilter.getSelectedItem();
-        int departmentId = dept == null ? 0 : dept.id;
-        int year = cmbYearFilter.getSelectedIndex();
-        int semester = cmbSemesterFilter.getSelectedIndex();
-        List<Course> list = courseDAO.getCoursesFiltered(departmentId, year, semester);
-        for (Course c : list) {
-            tableModel.addRow(new Object[]{
+        try {
+            FilterItem dept = (FilterItem) cmbDepartmentFilter.getSelectedItem();
+            int departmentId = dept == null ? 0 : dept.id;
+            int year = cmbYearFilter.getSelectedIndex();
+            int semester = cmbSemesterFilter.getSelectedIndex();
+            List<Course> list = courseDAO.getCoursesFiltered(departmentId, year, semester);
+            for (Course c : list) {
+                tableModel.addRow(new Object[]{
                     c.getCourseId(),
                     c.getCourseCode(),
                     c.getCourseName(),
@@ -422,10 +427,13 @@ public class CourseManagementPanel extends JPanel {
                     c.getDepartmentCode() != null ? c.getDepartmentCode() : c.getDepartmentName(),
                     c.isHasTheory() ? "Yes" : "No",
                     c.isHasPractical() ? "Yes" : "No"
-            });
-        }
-        if (lblCourseCount != null) {
-            lblCourseCount.setText("Showing " + list.size() + " curriculum module" + (list.size() == 1 ? "" : "s"));
+                });
+            }
+            if (lblCourseCount != null) {
+                lblCourseCount.setText("Showing " + list.size() + " curriculum module" + (list.size() == 1 ? "" : "s"));
+            }
+        } catch (Exception e) {
+            System.err.println("[CourseManagementPanel] Load courses note: " + e.getMessage());
         }
         styleCourseTableColumns();
     }

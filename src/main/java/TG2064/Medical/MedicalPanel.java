@@ -243,13 +243,19 @@ public class MedicalPanel extends JPanel {
 
     private void loadDropdowns() {
         cmbStudent.removeAllItems();
-        List<User> students = userDAO.getUsersByRole(4);
+        List<User> students = java.util.Collections.emptyList();
+        try {
+            students = userDAO.getUsersByRole(4);
+        } catch (Exception ignored) {}
         for (User u : students) {
             cmbStudent.addItem(new StudentItem(u.getUserId(), u.getUsername(), u.getFullName()));
         }
 
         cmbCourse.removeAllItems();
-        List<Course> courses = courseDAO.getAllCourses();
+        List<Course> courses = java.util.Collections.emptyList();
+        try {
+            courses = courseDAO.getAllCourses();
+        } catch (Exception ignored) {}
         for (Course c : courses) {
             cmbCourse.addItem(new CourseItem(c.getCourseId(), c.getCourseCode() + " - " + c.getCourseName()));
         }
@@ -257,7 +263,10 @@ public class MedicalPanel extends JPanel {
 
     public void loadMedicals() {
         tableModel.setRowCount(0);
-        List<Medical> list = medicalService.getAllMedicals();
+        List<Medical> list = java.util.Collections.emptyList();
+        try {
+            list = medicalService.getAllMedicals();
+        } catch (Exception ignored) {}
         for (Medical m : list) {
             tableModel.addRow(new Object[]{
                     m.getMedicalId(),
@@ -277,7 +286,10 @@ public class MedicalPanel extends JPanel {
         if (row == -1) return;
 
         int id = (int) tableModel.getValueAt(row, 0);
-        List<Medical> list = medicalService.getAllMedicals();
+        List<Medical> list = java.util.Collections.emptyList();
+        try {
+            list = medicalService.getAllMedicals();
+        } catch (Exception ignored) {}
         for (Medical m : list) {
             if (m.getMedicalId() == id) {
                 txtMedicalId.setText(String.valueOf(m.getMedicalId()));

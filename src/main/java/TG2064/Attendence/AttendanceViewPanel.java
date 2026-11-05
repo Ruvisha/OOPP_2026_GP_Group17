@@ -144,6 +144,31 @@ public class AttendanceViewPanel extends JPanel {
         sessionTable = new JTable(sessionTableModel);
         ModernTheme.styleTable(sessionTable);
 
+        // Status column visual indicator (Column 4 & 5)
+        javax.swing.table.DefaultTableCellRenderer statusRenderer = new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+                String valStr = value != null ? value.toString().toUpperCase() : "";
+                setFont(ModernTheme.FONT_BOLD);
+                setHorizontalAlignment(SwingConstants.CENTER);
+                if (valStr.contains("PRESENT")) {
+                    setForeground(new Color(22, 163, 74));
+                } else if (valStr.contains("ABSENT")) {
+                    setForeground(new Color(220, 38, 38));
+                } else if (valStr.contains("APPROVED")) {
+                    setForeground(new Color(37, 99, 235));
+                } else if (valStr.contains("PENDING")) {
+                    setForeground(new Color(217, 119, 6));
+                } else {
+                    setForeground(ModernTheme.TEXT_DARK);
+                }
+                return c;
+            }
+        };
+        sessionTable.getColumnModel().getColumn(4).setCellRenderer(statusRenderer);
+        sessionTable.getColumnModel().getColumn(5).setCellRenderer(statusRenderer);
+
         tablePanel.add(new JScrollPane(sessionTable), BorderLayout.CENTER);
         centerPanel.add(tablePanel, BorderLayout.CENTER);
 
@@ -173,7 +198,10 @@ public class AttendanceViewPanel extends JPanel {
         User cur = SessionManager.getCurrentUser();
         if (cur == null) return;
 
-        List<CourseEnrollment> enrollments = enrollmentDAO.getEnrollmentsByStudent(cur.getUserId());
+        List<CourseEnrollment> enrollments = java.util.Collections.emptyList();
+        try {
+            enrollments = enrollmentDAO.getEnrollmentsByStudent(cur.getUserId());
+        } catch (Exception ignored) {}
         for (CourseEnrollment ce : enrollments) {
             Course c = courseDAO.getCourseById(ce.getCourseId());
             if (c != null) {

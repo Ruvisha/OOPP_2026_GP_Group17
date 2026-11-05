@@ -178,7 +178,10 @@ public class AssignmentManagementPanel extends JPanel {
         User cur = SessionManager.getCurrentUser();
         if (cur == null) return;
 
-        List<Course> list = assessmentService.getAuthorizedCoursesForLecturer(cur.getUserId());
+        List<Course> list = java.util.Collections.emptyList();
+        try {
+            list = assessmentService.getAuthorizedCoursesForLecturer(cur.getUserId());
+        } catch (Exception ignored) {}
         cmbCourseFilter.addItem(new CourseOption(0, "All Assigned Courses (" + list.size() + ")"));
         for (Course c : list) {
             cmbCourseFilter.addItem(new CourseOption(c.getCourseId(), c.getCourseCode() + " - " + c.getCourseName()));
@@ -197,12 +200,14 @@ public class AssignmentManagementPanel extends JPanel {
         if (cur == null) return;
 
         CourseOption sel = (CourseOption) cmbCourseFilter.getSelectedItem();
-        List<Assignment> list;
+        List<Assignment> list = java.util.Collections.emptyList();
+        try {
         if (sel == null || sel.id == 0) {
             list = assessmentService.getAssignmentsByLecturer(cur.getUserId());
         } else {
             list = assessmentService.getAssignmentsByCourse(sel.id);
         }
+        } catch (Exception ignored) {}
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         for (Assignment a : list) {

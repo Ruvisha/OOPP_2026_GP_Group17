@@ -101,7 +101,7 @@ public class LecturerProfilePanel extends JPanel {
         JPanel passCard = ModernTheme.createCardPanel();
         passCard.setLayout(new BorderLayout());
 
-        JLabel passHeader = new JLabel("Security & Password Management");
+        JLabel passHeader = new JLabel("Security & Change Password");
         passHeader.setFont(ModernTheme.FONT_SUBTITLE);
         passHeader.setForeground(ModernTheme.PRIMARY);
         passHeader.setBorder(new EmptyBorder(0, 0, 15, 0));
@@ -120,16 +120,43 @@ public class LecturerProfilePanel extends JPanel {
         passFields.add(createRow("New Password:", txtNewPass));
         passFields.add(createRow("Confirm New Password:", txtConfirmPass));
 
+        JCheckBox chkShowPass = new JCheckBox("Show / Hide Password");
+        chkShowPass.setFont(ModernTheme.FONT_REGULAR);
+        chkShowPass.setForeground(ModernTheme.TEXT_DARK);
+        chkShowPass.setOpaque(false);
+        chkShowPass.addActionListener(e -> {
+            char echo = chkShowPass.isSelected() ? (char) 0 : '•';
+            txtCurrentPass.setEchoChar(echo);
+            txtNewPass.setEchoChar(echo);
+            txtConfirmPass.setEchoChar(echo);
+        });
+        passFields.add(Box.createRigidArea(new Dimension(0, 6)));
+        passFields.add(chkShowPass);
+
         JLabel note = new JLabel("<html><i>Note: Choose a strong password (min 8 characters, with uppercase, lowercase, and a number).</i></html>");
         note.setFont(ModernTheme.FONT_SMALL);
         note.setForeground(ModernTheme.TEXT_MUTED);
+        passFields.add(Box.createRigidArea(new Dimension(0, 10)));
         passFields.add(note);
 
         passCard.add(passFields, BorderLayout.CENTER);
 
-        JButton btnChangePass = ModernTheme.createSuccessButton("Update Password");
+        JPanel passBtnBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        passBtnBar.setOpaque(false);
+
+        JButton btnCancelPass = ModernTheme.createSecondaryButton("Cancel");
+        btnCancelPass.addActionListener(e -> {
+            txtCurrentPass.setText("");
+            txtNewPass.setText("");
+            txtConfirmPass.setText("");
+        });
+
+        JButton btnChangePass = ModernTheme.createSuccessButton("Change Password");
         btnChangePass.addActionListener(e -> handleChangePassword());
-        passCard.add(btnChangePass, BorderLayout.SOUTH);
+
+        passBtnBar.add(btnCancelPass);
+        passBtnBar.add(btnChangePass);
+        passCard.add(passBtnBar, BorderLayout.SOUTH);
 
         gridContainer.add(profileCard);
         gridContainer.add(passCard);
@@ -196,9 +223,19 @@ public class LecturerProfilePanel extends JPanel {
         User cur = SessionManager.getCurrentUser();
         if (cur == null) return;
 
-        String curPass = new String(txtCurrentPass.getPassword());
-        String newPass = new String(txtNewPass.getPassword());
-        String confPass = new String(txtConfirmPass.getPassword());
+        String curPass = new String(txtCurrentPass.getPassword()).trim();
+        String newPass = new String(txtNewPass.getPassword()).trim();
+        String confPass = new String(txtConfirmPass.getPassword()).trim();
+
+        if (curPass.isEmpty() || newPass.isEmpty() || confPass.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all password fields.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (newPass.length() < 8) {
+            JOptionPane.showMessageDialog(this, "New password must be at least 8 characters long.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
         if (!newPass.equals(confPass)) {
             JOptionPane.showMessageDialog(this, "New password and confirm password do not match.", "Password Mismatch", JOptionPane.WARNING_MESSAGE);
@@ -207,7 +244,7 @@ public class LecturerProfilePanel extends JPanel {
 
         try {
             authService.changePassword(cur.getUserId(), curPass, newPass);
-            JOptionPane.showMessageDialog(this, "Password updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Password changed successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             txtCurrentPass.setText("");
             txtNewPass.setText("");
             txtConfirmPass.setText("");

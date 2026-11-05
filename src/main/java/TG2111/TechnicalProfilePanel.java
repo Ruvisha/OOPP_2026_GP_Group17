@@ -6,7 +6,9 @@ import com.fot.ams.model.TechnicalOfficer;
 import com.fot.ams.model.User;
 import com.fot.ams.service.AuthenticationService;
 import com.fot.ams.service.UserService;
+import com.fot.ams.ui.common.ModernIcons;
 import com.fot.ams.ui.common.ModernTheme;
+import com.fot.ams.util.PasswordUtil;
 import com.fot.ams.util.SessionManager;
 import com.fot.ams.util.ValidationUtil;
 
@@ -45,6 +47,11 @@ public class TechnicalProfilePanel extends JPanel {
     private JButton btnEditProfile;
     private JButton btnSaveChanges;
     private JButton btnCancel;
+
+    // Password fields
+    private JPasswordField txtCurrentPass;
+    private JPasswordField txtNewPass;
+    private JPasswordField txtConfirmPass;
 
     public TechnicalProfilePanel() {
         this.userService = new UserService();
@@ -173,7 +180,22 @@ public class TechnicalProfilePanel extends JPanel {
 
         profileCard.add(buttonPanel, BorderLayout.SOUTH);
 
-        add(profileCard, BorderLayout.CENTER);
+        // Content panel containing Profile Card & Password Card
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setOpaque(false);
+
+        contentPanel.add(profileCard);
+        contentPanel.add(Box.createRigidArea(new Dimension(0, 18)));
+        contentPanel.add(createSecurityCard());
+
+        JScrollPane mainScroll = new JScrollPane(contentPanel);
+        mainScroll.setBorder(null);
+        mainScroll.setOpaque(false);
+        mainScroll.getViewport().setOpaque(false);
+        mainScroll.getVerticalScrollBar().setUnitIncrement(16);
+
+        add(mainScroll, BorderLayout.CENTER);
 
         // Initially in VIEW-ONLY mode
         disableProfileEditing();
@@ -474,5 +496,117 @@ public class TechnicalProfilePanel extends JPanel {
             throw new ValidationException("No active user session.");
         }
         return authService.changePassword(cur.getUserId(), currentPass, newPass);
+    }
+
+    private JPanel createSecurityCard() {
+        JPanel card = ModernTheme.createCardPanel(10);
+        card.setLayout(new BorderLayout(0, 16));
+
+        JLabel title = new JLabel("Security & Change Password", ModernIcons.get("shield", 18, ModernTheme.PRIMARY), SwingConstants.LEFT);
+        title.setFont(ModernTheme.FONT_SUBTITLE);
+        title.setForeground(ModernTheme.TEXT_DARK);
+        card.add(title, BorderLayout.NORTH);
+
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        centerPanel.setOpaque(false);
+
+        JPanel grid = new JPanel(new GridLayout(2, 2, 20, 12));
+        grid.setOpaque(false);
+
+        txtCurrentPass = new JPasswordField();
+        txtNewPass = new JPasswordField();
+        txtConfirmPass = new JPasswordField();
+
+        grid.add(createField("Current Password:", txtCurrentPass));
+        grid.add(new JPanel()); // Empty spacer
+        grid.add(createField("New Password (min 8 characters):", txtNewPass));
+        grid.add(createField("Confirm New Password:", txtConfirmPass));
+
+        centerPanel.add(grid);
+        centerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        JCheckBox chkShowPass = new JCheckBox("Show / Hide Password");
+        chkShowPass.setFont(ModernTheme.FONT_REGULAR);
+        chkShowPass.setForeground(ModernTheme.TEXT_DARK);
+        chkShowPass.setOpaque(false);
+        chkShowPass.addActionListener(e -> {
+            char echo = chkShowPass.isSelected() ? (char) 0 : '•';
+            txtCurrentPass.setEchoChar(echo);
+            txtNewPass.setEchoChar(echo);
+            txtConfirmPass.setEchoChar(echo);
+        });
+        centerPanel.add(chkShowPass);
+
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        actions.setOpaque(false);
+
+        JButton btnCancelPass = ModernTheme.createSecondaryButton("Cancel");
+        btnCancelPass.addActionListener(e -> {
+            txtCurrentPass.setText("");
+            txtNewPass.setText("");
+            txtConfirmPass.setText("");
+        });
+
+        JButton btnUpdatePass = ModernTheme.createSuccessButton("Change Password");
+        btnUpdatePass.addActionListener(e -> handleChangePassword());
+
+        actions.add(btnCancelPass);
+        actions.add(btnUpdatePass);
+
+        card.add(centerPanel, BorderLayout.CENTER);
+        card.add(actions, BorderLayout.SOUTH);
+        return card;
+    }
+
+    private JPanel createField(String label, JComponent field) {
+        JPanel p = new JPanel(new BorderLayout(4, 4));
+        p.setOpaque(false);
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(ModernTheme.FONT_SMALL);
+        lbl.setForeground(ModernTheme.TEXT_MUTED);
+        field.setPreferredSize(new Dimension(220, 32));
+        p.add(lbl, BorderLayout.NORTH);
+        p.add(field, BorderLayout.CENTER);
+        return p;
+    }
+
+    private void handleChangePassword() {
+        User cur = SessionManager.getCurrentUser();
+        if (cur == null) return;
+
+        String curPass = new String(txtCurrentPass.getPassword()).trim();
+        String newPass = new String(txtNewPass.getPassword()).trim();
+        String confPass = new String(txtConfirmPass.getPassword()).trim();
+
+        if (curPass.isEmpty() || newPass.isEmpty() || confPass.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill in all password fields.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (newPass.length() < 8) {
+            JOptionPane.showMessageDialog(this, "New password must be at least 8 characters long.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!PasswordUtil.isValidPassword(newPass)) {
+            JOptionPane.showMessageDialog(this, "New password must contain at least one uppercase letter (A-Z), one lowercase letter (a-z), and one number (0-9).", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!newPass.equals(confPass)) {
+            JOptionPane.showMessageDialog(this, "New password and confirm password do not match.", "Password Mismatch", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            authService.changePassword(cur.getUserId(), curPass, newPass);
+            JOptionPane.showMessageDialog(this, "Password changed successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            txtCurrentPass.setText("");
+            txtNewPass.setText("");
+            txtConfirmPass.setText("");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Password Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }

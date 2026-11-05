@@ -55,7 +55,10 @@ public class TechnicalNoticePanel extends JPanel {
 
     public void loadNotices() {
         cardsContainer.removeAll();
-        List<Notice> list = noticeService.getActiveNotices();
+        List<Notice> list = java.util.Collections.emptyList();
+        try {
+            list = noticeService.getActiveNotices();
+        } catch (Exception ignored) {}
 
         if (list == null || list.isEmpty()) {
             JLabel lblEmpty = new JLabel("No active notices available at the moment.", JLabel.CENTER);

@@ -228,7 +228,10 @@ public class CourseViewPanel extends JPanel {
         User cur = SessionManager.getCurrentUser();
         if (cur == null) return;
 
-        List<CourseEnrollment> enrollments = enrollmentDAO.getEnrollmentsByStudent(cur.getUserId());
+        List<CourseEnrollment> enrollments = java.util.Collections.emptyList();
+        try {
+            enrollments = enrollmentDAO.getEnrollmentsByStudent(cur.getUserId());
+        } catch (Exception ignored) {}
         for (CourseEnrollment ce : enrollments) {
             Course c = courseDAO.getCourseById(ce.getCourseId());
             if (c != null) {
