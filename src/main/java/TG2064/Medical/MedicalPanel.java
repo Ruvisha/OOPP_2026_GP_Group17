@@ -18,6 +18,8 @@ import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Date;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
@@ -36,7 +38,8 @@ public class MedicalPanel extends JPanel {
     private JComboBox<StudentItem> cmbStudent;
     private JComboBox<CourseItem> cmbCourse;
     private JComboBox<String> cmbSessionType;
-    private JTextField txtSessionDate;
+    private JTextField txtFromDate;
+    private JTextField txtToDate;
     private JTextField txtSubmissionDate;
     private JTextArea txtReason;
     private JTextField txtDocPath;
@@ -114,14 +117,14 @@ public class MedicalPanel extends JPanel {
         // VERTICAL SPLIT: Form Card on top, Table Panel on bottom
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         splitPane.setResizeWeight(0.45); // Allocates proportion of vertical space
-        splitPane.setDividerLocation(310); // Initial pixel height for the top form section
+        splitPane.setDividerLocation(340); // Initial pixel height for the top form section
 
         // Table Panel (Bottom)
         JPanel tablePanel = new JPanel(new BorderLayout());
         tablePanel.setBackground(Color.WHITE);
         tablePanel.setBorder(new LineBorder(ModernTheme.BORDER, 1));
 
-        String[] cols = {"ID", "Reg No", "Student Name", "Course", "Type", "Session Date", "Status", "Reviewer Remarks"};
+        String[] cols = {"ID", "Reg No", "Student Name", "Course", "Type", "From Date", "To Date", "Status", "Reviewer Remarks"};
         tableModel = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int r, int c) {
@@ -143,7 +146,7 @@ public class MedicalPanel extends JPanel {
         // Form Panel (Top)
         JPanel formCard = ModernTheme.createCardPanel();
         formCard.setLayout(new BorderLayout());
-        formCard.setPreferredSize(new Dimension(0, 180));
+        formCard.setPreferredSize(new Dimension(0, 210));
 
         JLabel formHeader = new JLabel("Medical Record Details");
         formHeader.setFont(ModernTheme.FONT_SUBTITLE);
@@ -161,7 +164,8 @@ public class MedicalPanel extends JPanel {
         cmbStudent = new JComboBox<>();
         cmbCourse = new JComboBox<>();
         cmbSessionType = new JComboBox<>(new String[]{"THEORY", "PRACTICAL", "BOTH"});
-        txtSessionDate = new JTextField(DateUtil.formatDate(DateUtil.nowSqlDate()));
+        txtFromDate = new JTextField(DateUtil.formatDate(DateUtil.nowSqlDate()));
+        txtToDate = new JTextField(DateUtil.formatDate(DateUtil.nowSqlDate()));
         txtSubmissionDate = new JTextField(DateUtil.formatDate(DateUtil.nowSqlDate()));
         txtDocPath = new JTextField("medicals/cert.pdf");
         cmbStatus = new JComboBox<>(new String[]{"NOT_APPROVED", "APPROVED"});
@@ -176,7 +180,8 @@ public class MedicalPanel extends JPanel {
         fields.add(createRow("Undergraduate:", cmbStudent));
         fields.add(createRow("Course Module:", cmbCourse));
         fields.add(createRow("Session Component:", cmbSessionType));
-        fields.add(createRow("Missed Session Date (YYYY-MM-DD):", txtSessionDate));
+        fields.add(createRow("From Date (YYYY-MM-DD):", txtFromDate));
+        fields.add(createRow("To Date (YYYY-MM-DD):", txtToDate));
         fields.add(createRow("Date of Submission (YYYY-MM-DD):", txtSubmissionDate));
         fields.add(createRow("Medical Certificate Reason:", new JScrollPane(txtReason)));
         fields.add(createRow("Document File Reference:", txtDocPath));
@@ -185,7 +190,7 @@ public class MedicalPanel extends JPanel {
 
         formCard.add(new JScrollPane(fields), BorderLayout.CENTER);
 
-        // Action Buttons Row (Updated grid to fit 6 buttons)
+        // Action Buttons Row (6 buttons)
         JPanel btnPanel = new JPanel(new GridLayout(1, 6, 6, 6));
         btnPanel.setOpaque(false);
         btnPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
@@ -195,14 +200,14 @@ public class MedicalPanel extends JPanel {
         btnReject = ModernTheme.createDangerButton("Reject Medical");
         btnDelete = ModernTheme.createDangerButton("Delete Record");
         btnClear = ModernTheme.createSecondaryButton("Clear Form");
-        btnDownload = ModernTheme.createSecondaryButton("Download Report"); // Initialized download button
+        btnDownload = ModernTheme.createSecondaryButton("Download Report");
 
         btnPanel.add(btnAdd);
         btnPanel.add(btnApprove);
         btnPanel.add(btnReject);
         btnPanel.add(btnDelete);
         btnPanel.add(btnClear);
-        btnPanel.add(btnDownload); // Added to panel layout
+        btnPanel.add(btnDownload);
 
         formCard.add(btnPanel, BorderLayout.SOUTH);
 
@@ -218,7 +223,7 @@ public class MedicalPanel extends JPanel {
         btnReject.addActionListener(e -> handleSetStatus("NOT_APPROVED"));
         btnDelete.addActionListener(e -> handleDelete());
         btnClear.addActionListener(e -> clearForm());
-        btnDownload.addActionListener(e -> handleDownloadReport()); // Action listener for download
+        btnDownload.addActionListener(e -> handleDownloadReport());
     }
 
     private JPanel createRow(String labelText, JComponent comp) {
@@ -243,13 +248,19 @@ public class MedicalPanel extends JPanel {
 
     private void loadDropdowns() {
         cmbStudent.removeAllItems();
-        List<User> students = userDAO.getUsersByRole(4);
+        List<User> students = java.util.Collections.emptyList();
+        try {
+            students = userDAO.getUsersByRole(4);
+        } catch (Exception ignored) {}
         for (User u : students) {
             cmbStudent.addItem(new StudentItem(u.getUserId(), u.getUsername(), u.getFullName()));
         }
 
         cmbCourse.removeAllItems();
-        List<Course> courses = courseDAO.getAllCourses();
+        List<Course> courses = java.util.Collections.emptyList();
+        try {
+            courses = courseDAO.getAllCourses();
+        } catch (Exception ignored) {}
         for (Course c : courses) {
             cmbCourse.addItem(new CourseItem(c.getCourseId(), c.getCourseCode() + " - " + c.getCourseName()));
         }
@@ -257,7 +268,10 @@ public class MedicalPanel extends JPanel {
 
     public void loadMedicals() {
         tableModel.setRowCount(0);
-        List<Medical> list = medicalService.getAllMedicals();
+        List<Medical> list = java.util.Collections.emptyList();
+        try {
+            list = medicalService.getAllMedicals();
+        } catch (Exception ignored) {}
         for (Medical m : list) {
             tableModel.addRow(new Object[]{
                     m.getMedicalId(),
@@ -265,7 +279,8 @@ public class MedicalPanel extends JPanel {
                     m.getStudentName(),
                     m.getCourseCode(),
                     m.getSessionType(),
-                    DateUtil.formatDate(m.getSessionDate()),
+                    m.getFromDate(),
+                    m.getToDate(),
                     m.getStatus(),
                     m.getRemarks() != null ? m.getRemarks() : "-"
             });
@@ -277,12 +292,16 @@ public class MedicalPanel extends JPanel {
         if (row == -1) return;
 
         int id = (int) tableModel.getValueAt(row, 0);
-        List<Medical> list = medicalService.getAllMedicals();
+        List<Medical> list = java.util.Collections.emptyList();
+        try {
+            list = medicalService.getAllMedicals();
+        } catch (Exception ignored) {}
         for (Medical m : list) {
             if (m.getMedicalId() == id) {
                 txtMedicalId.setText(String.valueOf(m.getMedicalId()));
                 cmbSessionType.setSelectedItem(m.getSessionType());
-                txtSessionDate.setText(DateUtil.formatDate(m.getSessionDate()));
+                txtFromDate.setText(m.getFromDate() != null ? m.getFromDate() : "");
+                txtToDate.setText(m.getToDate() != null ? m.getToDate() : "");
                 txtSubmissionDate.setText(DateUtil.formatDate(m.getSubmissionDate()));
                 txtReason.setText(m.getReason());
                 txtDocPath.setText(m.getMedicalDocPath() != null ? m.getMedicalDocPath() : "");
@@ -310,7 +329,8 @@ public class MedicalPanel extends JPanel {
     private void clearForm() {
         medicalTable.clearSelection();
         txtMedicalId.setText("");
-        txtSessionDate.setText(DateUtil.formatDate(DateUtil.nowSqlDate()));
+        txtFromDate.setText(DateUtil.formatDate(DateUtil.nowSqlDate()));
+        txtToDate.setText(DateUtil.formatDate(DateUtil.nowSqlDate()));
         txtSubmissionDate.setText(DateUtil.formatDate(DateUtil.nowSqlDate()));
         txtReason.setText("");
         txtDocPath.setText("");
@@ -324,16 +344,34 @@ public class MedicalPanel extends JPanel {
             CourseItem crs = (CourseItem) cmbCourse.getSelectedItem();
             if (stu == null || crs == null) throw new ValidationException("Student and course selection required.");
 
-            Date sDate = DateUtil.parseDate(txtSessionDate.getText().trim());
+            String fromDateStr = txtFromDate.getText().trim();
+            String toDateStr = txtToDate.getText().trim();
             Date subDate = DateUtil.parseDate(txtSubmissionDate.getText().trim());
-            if (sDate == null || subDate == null) throw new ValidationException("Please enter valid dates in YYYY-MM-DD format.");
+
+            if (fromDateStringIsEmpty(fromDateStr) || toDateStringIsEmpty(toDateStr) || subDate == null) {
+                throw new ValidationException("Please enter valid dates in YYYY-MM-DD format.");
+            }
+
+            // Validate date range and 2-week constraint
+            LocalDate fromDate = LocalDate.parse(fromDateStr);
+            LocalDate toDate = LocalDate.parse(toDateStr);
+
+            if (toDate.isBefore(fromDate)) {
+                throw new ValidationException("To Date cannot be earlier than From Date.");
+            }
+
+            long daysBetween = ChronoUnit.DAYS.between(fromDate, toDate);
+            if (daysBetween > 14) {
+                throw new ValidationException("The medical absence date range cannot exceed 2 weeks (14 days).");
+            }
 
             Medical m = new Medical(
                     0,
                     stu.id,
                     crs.id,
                     (String) cmbSessionType.getSelectedItem(),
-                    sDate,
+                    fromDateStr,
+                    toDateStr,
                     subDate,
                     txtReason.getText().trim(),
                     txtDocPath.getText().trim(),
@@ -348,8 +386,16 @@ public class MedicalPanel extends JPanel {
         } catch (ValidationException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Validation Error", JOptionPane.WARNING_MESSAGE);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Database or parsing error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private boolean fromDateStringIsEmpty(String str) {
+        return str == null || str.isEmpty();
+    }
+
+    private boolean toDateStringIsEmpty(String str) {
+        return str == null || str.isEmpty();
     }
 
     private void handleSetStatus(String status) {
@@ -403,7 +449,6 @@ public class MedicalPanel extends JPanel {
         }
     }
 
-    // Added handler to download/save the selected medical report
     private void handleDownloadReport() {
         if (txtMedicalId.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please select a medical record from the table first.", "Selection Required", JOptionPane.WARNING_MESSAGE);

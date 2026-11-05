@@ -258,50 +258,54 @@ public class TimetableManagementPanel extends JPanel {
     private void loadDropdowns() {
         deptFilterCombo.removeAllItems();
         deptFilterCombo.addItem(new DeptFilterItem(0, "All Departments"));
-
         cmbDepartment.removeAllItems();
-        List<Department> departments = departmentDAO.getAllDepartments();
-        for (Department d : departments) {
-            DeptFilterItem item = new DeptFilterItem(d.getDepartmentId(), d.getDepartmentCode() + " - " + d.getDepartmentName());
-            deptFilterCombo.addItem(item);
-            cmbDepartment.addItem(item);
-        }
-
         cmbCourse.removeAllItems();
-        List<Course> courses = courseDAO.getAllCourses();
-        for (Course c : courses) {
-            cmbCourse.addItem(new CourseComboItem(c.getCourseId(), c.getCourseCode(), c.getCourseName()));
-        }
-
         cmbLecturer.removeAllItems();
         cmbLecturer.addItem(new LecturerComboItem(0, "-- None / TBA --"));
-        List<User> lecturers = userDAO.getUsersByRole(2);
-        for (User u : lecturers) {
-            cmbLecturer.addItem(new LecturerComboItem(u.getUserId(), u.getFullName()));
+        try {
+            List<Department> departments = departmentDAO.getAllDepartments();
+            for (Department d : departments) {
+                DeptFilterItem item = new DeptFilterItem(d.getDepartmentId(), d.getDepartmentCode() + " - " + d.getDepartmentName());
+                deptFilterCombo.addItem(item);
+                cmbDepartment.addItem(item);
+            }
+            List<Course> courses = courseDAO.getAllCourses();
+            for (Course c : courses) {
+                cmbCourse.addItem(new CourseComboItem(c.getCourseId(), c.getCourseCode(), c.getCourseName()));
+            }
+            List<User> lecturers = userDAO.getUsersByRole(2);
+            for (User u : lecturers) {
+                cmbLecturer.addItem(new LecturerComboItem(u.getUserId(), u.getFullName()));
+            }
+        } catch (Exception e) {
+            System.err.println("[TimetableManagementPanel] Dropdown load note: " + e.getMessage());
         }
     }
 
     public void loadTimetables(int deptId) {
         tableModel.setRowCount(0);
-        List<Timetable> list;
-        if (deptId == 0) {
-            list = timetableService.getAllTimetables();
-        } else {
-            list = timetableService.getTimetablesByDepartment(deptId);
-        }
-
-        for (Timetable t : list) {
-            String timeSlot = DateUtil.formatTime(t.getStartTime()) + " - " + DateUtil.formatTime(t.getEndTime());
-            tableModel.addRow(new Object[]{
-                t.getTimetableId(),
-                t.getDayOfWeek(),
-                timeSlot,
-                t.getCourseCode() + " (" + t.getCourseName() + ")",
-                t.getSessionType(),
-                t.getRoom(),
-                t.getLecturerName() != null ? t.getLecturerName() : "TBA",
-                t.getDepartmentCode() != null ? t.getDepartmentCode() : "-"
-            });
+        try {
+            List<Timetable> list;
+            if (deptId == 0) {
+                list = timetableService.getAllTimetables();
+            } else {
+                list = timetableService.getTimetablesByDepartment(deptId);
+            }
+            for (Timetable t : list) {
+                String timeSlot = DateUtil.formatTime(t.getStartTime()) + " - " + DateUtil.formatTime(t.getEndTime());
+                tableModel.addRow(new Object[]{
+                    t.getTimetableId(),
+                    t.getDayOfWeek(),
+                    timeSlot,
+                    t.getCourseCode() + " (" + t.getCourseName() + ")",
+                    t.getSessionType(),
+                    t.getRoom(),
+                    t.getLecturerName() != null ? t.getLecturerName() : "TBA",
+                    t.getDepartmentCode() != null ? t.getDepartmentCode() : "-"
+                });
+            }
+        } catch (Exception e) {
+            System.err.println("[TimetableManagementPanel] Timetables load note: " + e.getMessage());
         }
     }
 

@@ -167,7 +167,10 @@ public class TimetableViewPanel extends JPanel {
         User cur = SessionManager.getCurrentUser();
         int deptId = (cur != null && cur.getDepartmentId() != null) ? cur.getDepartmentId() : 1;
 
-        List<Timetable> list = timetableService.getTimetablesByDepartment(deptId);
+        List<Timetable> list = java.util.Collections.emptyList();
+        try {
+            list = timetableService.getTimetablesByDepartment(deptId);
+        } catch (Exception ignored) {}
 
         // Populate backward-compatible TableModel
         for (Timetable t : list) {

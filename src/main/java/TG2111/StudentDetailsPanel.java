@@ -151,8 +151,8 @@ public class StudentDetailsPanel extends JPanel {
         detailHeader.add(statsRow);
         detailCard.add(detailHeader, BorderLayout.NORTH);
 
-        // Medical Sub-table
-        String[] medCols = {"Medical ID", "Course", "Session Type", "Session Date", "Reason", "Document", "Status", "Reviewer Remarks"};
+        // Medical Sub-table (Updated columns for From Date and To Date)
+        String[] medCols = {"Medical ID", "Course", "Session Type", "From Date", "To Date", "Reason", "Document", "Status", "Reviewer Remarks"};
         medTableModel = new DefaultTableModel(medCols, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -173,12 +173,16 @@ public class StudentDetailsPanel extends JPanel {
 
     private void loadCourses() {
         cmbCourse.removeAllItems();
-        List<Course> list = courseDAO.getAllCourses();
-        for (Course c : list) {
-            cmbCourse.addItem(new CourseComboItem(c.getCourseId(), c.getCourseCode(), c.getCourseName()));
-        }
-        if (cmbCourse.getItemCount() > 0) {
-            cmbCourse.setSelectedIndex(0);
+        try {
+            List<Course> list = courseDAO.getAllCourses();
+            for (Course c : list) {
+                cmbCourse.addItem(new CourseComboItem(c.getCourseId(), c.getCourseCode(), c.getCourseName()));
+            }
+            if (cmbCourse.getItemCount() > 0) {
+                cmbCourse.setSelectedIndex(0);
+            }
+        } catch (Exception e) {
+            System.err.println("[StudentDetailsPanel] Load courses note: " + e.getMessage());
         }
     }
 
@@ -196,14 +200,14 @@ public class StudentDetailsPanel extends JPanel {
                 String classification = gpaService.getClassification(cgpa);
 
                 tableModel.addRow(new Object[]{
-                    ug.getUserId(),
-                    ug.getStudentRegNo(),
-                    ug.getFullName(),
-                    ug.getStudentType(),
-                    String.format("%.1f%%", summary.getEffectivePercentage()),
-                    summary.getStatusCategory(),
-                    cgpa > 0.0 ? String.format("%.2f", cgpa) : "N/A",
-                    classification
+                        ug.getUserId(),
+                        ug.getStudentRegNo(),
+                        ug.getFullName(),
+                        ug.getStudentType(),
+                        String.format("%.1f%%", summary.getEffectivePercentage()),
+                        summary.getStatusCategory(),
+                        cgpa > 0.0 ? String.format("%.2f", cgpa) : "N/A",
+                        classification
                 });
             }
         }
@@ -228,14 +232,15 @@ public class StudentDetailsPanel extends JPanel {
         List<Medical> medicals = medicalService.getMedicalsByStudent(studentId);
         for (Medical m : medicals) {
             medTableModel.addRow(new Object[]{
-                m.getMedicalId(),
-                m.getCourseCode(),
-                m.getSessionType(),
-                DateUtil.formatDate(m.getSessionDate()),
-                m.getReason(),
-                m.getMedicalDocPath() != null ? m.getMedicalDocPath() : "-",
-                m.getStatus(),
-                m.getRemarks() != null ? m.getRemarks() : "-"
+                    m.getMedicalId(),
+                    m.getCourseCode(),
+                    m.getSessionType(),
+                    m.getFromDate(),
+                    m.getToDate(),
+                    m.getReason(),
+                    m.getMedicalDocPath() != null ? m.getMedicalDocPath() : "-",
+                    m.getStatus(),
+                    m.getRemarks() != null ? m.getRemarks() : "-"
             });
         }
     }

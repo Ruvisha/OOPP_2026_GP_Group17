@@ -186,7 +186,10 @@ public class TechnicalTimetablePanel extends JPanel {
 
     private void loadDepartments() {
         cmbDept.removeAllItems();
-        List<Department> list = departmentDAO.getAllDepartments();
+        List<Department> list = java.util.Collections.emptyList();
+        try {
+            list = departmentDAO.getAllDepartments();
+        } catch (Exception ignored) {}
         for (Department d : list) {
             cmbDept.addItem(new DeptItem(d.getDepartmentId(), d.getDepartmentCode() + " - " + d.getDepartmentName()));
         }
@@ -207,7 +210,10 @@ public class TechnicalTimetablePanel extends JPanel {
         DeptItem dept = (DeptItem) cmbDept.getSelectedItem();
         if (dept == null) return;
 
-        List<Timetable> list = timetableService.getTimetablesByDepartment(dept.id);
+        List<Timetable> list = java.util.Collections.emptyList();
+        try {
+            list = timetableService.getTimetablesByDepartment(dept.id);
+        } catch (Exception ignored) {}
 
         // Populate backward-compatible TableModel
         for (Timetable t : list) {

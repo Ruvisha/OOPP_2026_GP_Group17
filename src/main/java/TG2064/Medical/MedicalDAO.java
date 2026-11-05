@@ -19,7 +19,8 @@ public class MedicalDAO {
                 rs.getInt("student_id"),
                 rs.getInt("course_id"),
                 rs.getString("session_type"),
-                rs.getDate("session_date"),
+                rs.getString("from_date"),
+                rs.getString("to_date"),
                 rs.getDate("submission_date"),
                 rs.getString("reason"),
                 rs.getString("medical_doc_path"),
@@ -61,13 +62,10 @@ public class MedicalDAO {
         return list;
     }
 
-    // Fixed getMedicalReportPath method
     public String getMedicalReportPath(int medicalId) {
         String filePath = null;
-        // Changed table name from medical_records to medical to match your actual database schema
         String query = "SELECT medical_doc_path FROM medical WHERE medical_id = ?";
 
-        // Properly open connection using DatabaseConnection.getConnection()
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
@@ -85,17 +83,18 @@ public class MedicalDAO {
     }
 
     public boolean insertMedical(Medical medical) {
-        String query = "INSERT INTO medical (student_id, course_id, session_type, session_date, submission_date, reason, medical_doc_path, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO medical (student_id, course_id, session_type, from_date, to_date, submission_date, reason, medical_doc_path, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, medical.getStudentId());
             pstmt.setInt(2, medical.getCourseId());
             pstmt.setString(3, medical.getSessionType());
-            pstmt.setDate(4, medical.getSessionDate());
-            pstmt.setDate(5, medical.getSubmissionDate());
-            pstmt.setString(6, medical.getReason());
-            pstmt.setString(7, medical.getMedicalDocPath());
-            pstmt.setString(8, medical.getStatus() != null ? medical.getStatus() : "PENDING");
+            pstmt.setString(4, medical.getFromDate());
+            pstmt.setString(5, medical.getToDate());
+            pstmt.setDate(6, medical.getSubmissionDate());
+            pstmt.setString(7, medical.getReason());
+            pstmt.setString(8, medical.getMedicalDocPath());
+            pstmt.setString(9, medical.getStatus() != null ? medical.getStatus() : "PENDING");
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new DatabaseException("Failed to insert medical record: " + e.getMessage(), e);
@@ -141,9 +140,9 @@ public class MedicalDAO {
     }
 
     public boolean addMedical(Medical med) {
-        String sql = "INSERT INTO medical (student_id, course_id, session_type, session_date, " +
+        String sql = "INSERT INTO medical (student_id, course_id, session_type, from_date, to_date, " +
                 "submission_date, reason, medical_doc_path, status, remarks) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -151,12 +150,13 @@ public class MedicalDAO {
             stmt.setInt(1, med.getStudentId());
             stmt.setInt(2, med.getCourseId());
             stmt.setString(3, med.getSessionType());
-            stmt.setDate(4, med.getSessionDate());
-            stmt.setDate(5, med.getSubmissionDate());
-            stmt.setString(6, med.getReason());
-            stmt.setString(7, med.getMedicalDocPath());
-            stmt.setString(8, med.getStatus() != null ? med.getStatus() : "NOT_APPROVED");
-            stmt.setString(9, med.getRemarks());
+            stmt.setString(4, med.getFromDate());
+            stmt.setString(5, med.getToDate());
+            stmt.setDate(6, med.getSubmissionDate());
+            stmt.setString(7, med.getReason());
+            stmt.setString(8, med.getMedicalDocPath());
+            stmt.setString(9, med.getStatus() != null ? med.getStatus() : "NOT_APPROVED");
+            stmt.setString(10, med.getRemarks());
 
             int affected = stmt.executeUpdate();
             if (affected > 0) {

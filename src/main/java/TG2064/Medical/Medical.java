@@ -15,7 +15,8 @@ public class Medical {
     private String courseCode;
     private String courseName;
     private String sessionType = "THEORY"; // THEORY, PRACTICAL, BOTH
-    private Date sessionDate;
+    private String fromDate;
+    private String toDate;
     private Date submissionDate;
     private String reason;
     private String medicalDocPath;
@@ -29,13 +30,14 @@ public class Medical {
     }
 
     public Medical(int medicalId, int studentId, int courseId, String sessionType,
-                   Date sessionDate, Date submissionDate, String reason,
+                   String fromDate, String toDate, Date submissionDate, String reason,
                    String medicalDocPath, String status) {
         this.medicalId = medicalId;
         this.studentId = studentId;
         this.courseId = courseId;
         this.sessionType = sessionType;
-        this.sessionDate = sessionDate;
+        this.fromDate = fromDate;
+        this.toDate = toDate;
         this.submissionDate = submissionDate;
         this.reason = reason;
         this.medicalDocPath = medicalDocPath;
@@ -115,12 +117,20 @@ public class Medical {
         this.sessionType = sessionType;
     }
 
-    public Date getSessionDate() {
-        return sessionDate;
+    public String getFromDate() {
+        return fromDate;
     }
 
-    public void setSessionDate(Date sessionDate) {
-        this.sessionDate = sessionDate;
+    public void setFromDate(String fromDate) {
+        this.fromDate = fromDate;
+    }
+
+    public String getToDate() {
+        return toDate;
+    }
+
+    public void setToDate(String toDate) {
+        this.toDate = toDate;
     }
 
     public Date getSubmissionDate() {
